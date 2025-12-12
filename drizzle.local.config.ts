@@ -16,5 +16,5 @@ export default {
     dbCredentials: {
         url: `file:${env.LOCAL_DB_PATH}`,
     },
-    tablesFilter: [`start_*`],
+    tablesFilter: [`compta_*`],
 } satisfies Config;

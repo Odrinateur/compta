@@ -31,5 +31,5 @@ export default {
         databaseId: env.CLOUDFLARE_D1_DATABASE_ID ?? "sk_invalid",
         token: env.CLOUDFLARE_TOKEN ?? "sk_invalid",
     },
-    tablesFilter: [`start_*`],
+    tablesFilter: [`compta_*`],
 } satisfies Config;

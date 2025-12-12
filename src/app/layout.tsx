@@ -12,8 +12,8 @@ import { ResponsiveSpacing } from "@/app/_components/ui/responsive-spacing";
 import { HydrateClient } from "@/trpc/server";
 
 export const metadata: Metadata = {
-    title: "start",
-    description: "start",
+    title: "compta",
+    description: "compta",
     icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

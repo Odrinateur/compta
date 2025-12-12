@@ -9,10 +9,10 @@ import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
  * database instance for multiple projects.
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
- * NOTE: start_ is the prefix for the table names, you can change it
+ * NOTE: compta_ is the prefix for the table names, you can change it
  */
 export const createTable = sqliteTableCreator(
-    (name) => `start_${name}`,
+    (name) => `compta_${name}`,
 );
 
 export const users = createTable(
