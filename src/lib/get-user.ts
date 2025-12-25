@@ -1,17 +1,22 @@
 import { cookies } from "next/headers";
 import { api } from "@/trpc/server";
+import { redirect } from "next/navigation";
 
 export const getUser = async () => {
     const cookiesStore = await cookies();
-    const userId = cookiesStore.get("userId")?.value;
+    const token = cookiesStore.get("token")?.value;
 
-    if (!userId || isNaN(parseInt(userId))) {
-        return null;
+    if (!token) {
+        redirect("/login");
     }
 
     try {
-        return await api.user.getUser({ userId: parseInt(userId) });
+        const user = await api.user.getUserByToken({ token });
+        if (!user) {
+            redirect("/login");
+        }
+        return { token };
     } catch {
-        return null;
+        redirect("/login");
     }
 };

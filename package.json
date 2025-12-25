@@ -44,7 +44,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.44.7",
     "geist": "^1.5.1",
-    "lucide-react": "^0.553.0",
+    "lucide-react": "^0.561.0",
     "next": "15.4.8",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",

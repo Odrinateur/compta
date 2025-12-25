@@ -18,8 +18,61 @@ export const createTable = sqliteTableCreator(
 export const users = createTable(
     "users",
     (d) => ({
-        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        username: d.text("username").notNull().unique().primaryKey(),
+        hashedPassword: d.text("hashed_password").notNull(),
         createdAt: d.text("timestamp").notNull().default(sql`(current_timestamp)`),
     }),
     (t) => [index("users_created_at_idx").on(t.createdAt)],
+);
+
+export const tokens = createTable(
+    "tokens",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        username: d.text("username").notNull().references(() => users.username),
+        token: d.text("token").notNull(),
+        createdAt: d.text("timestamp").notNull().default(sql`(current_timestamp)`),
+    }),
+    (t) => [index("tokens_created_at_idx").on(t.createdAt)],
+);
+
+export const categories = createTable(
+    "categories",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        name: d.text("name").notNull(),
+        default: d.integer({ mode: "boolean" }).notNull().default(false),
+    }),
+    (t) => [index("categories_name_idx").on(t.name)],
+);
+
+export const months = createTable(
+    "months",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        year: d.integer({ mode: "number" }).notNull(),
+        month: d.integer({ mode: "number" }).notNull(),
+    }),
+    (t) => [index("months_year_month_idx").on(t.year, t.month)],
+);
+
+export const interactions = createTable(
+    "interactions",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        name: d.text("name").notNull(),
+        monthId: d.integer({ mode: "number" }).notNull().references(() => months.id),
+        categoryId: d.integer({ mode: "number" }).notNull().references(() => categories.id),
+        amount: d.integer({ mode: "number" }).notNull(),
+    }),
+    (t) => [index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId)],
+);
+
+export const everyMonthInteractions = createTable(
+    "every_month_interactions",
+    (d) => ({
+        idInteraction: d.integer({ mode: "number" }).primaryKey().references(() => interactions.id),
+        isActive: d.integer({ mode: "boolean" }).notNull().default(true),
+    }),
+    (t) => [index("every_month_interactions_id_interaction_idx").on(t.idInteraction)],
 );

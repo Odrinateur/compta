@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1765544368701,
+      "tag": "0000_supreme_gamora",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1765545214992,
+      "tag": "0001_reflective_squadron_supreme",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1765550418082,
+      "tag": "0002_sour_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1766672743498,
+      "tag": "0003_naive_vampiro",
+      "breakpoints": true
+    }
+  ]
+}
