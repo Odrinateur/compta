@@ -1,0 +1,1 @@
+ALTER TABLE `compta_interactions` ADD `user_id` text NOT NULL REFERENCES compta_users(username);

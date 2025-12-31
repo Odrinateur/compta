@@ -12,7 +12,6 @@ export const getUser = async () => {
 
     try {
         const user = await api.user.getUserByToken({ token });
-        console.log(user, "ubef");
         if (!user) {
             redirect("/login");
         }

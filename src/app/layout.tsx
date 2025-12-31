@@ -6,6 +6,8 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 import { H2 } from "./_components/ui/typography";
+import { getUser } from "@/lib/get-user";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
     title: "compta",
@@ -21,6 +23,13 @@ const geist = Geist({
 export default async function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
+    const headersList = await headers();
+    const pathname = headersList.get("x-pathname") ?? "";
+
+    if (pathname !== "/login") {
+        await getUser();
+    }
+
     return (
         <html lang="en" className={`${geist.variable} h-full overflow-hidden`}>
             <body className="relative h-full overflow-x-hidden overflow-y-auto overscroll-contain">

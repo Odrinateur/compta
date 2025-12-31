@@ -64,6 +64,7 @@ export const interactions = createTable(
         monthId: d.integer({ mode: "number" }).notNull().references(() => months.id),
         categoryId: d.integer({ mode: "number" }).notNull().references(() => categories.id),
         amount: d.integer({ mode: "number" }).notNull(),
+        userId: d.text("user_id").notNull().references(() => users.username),
     }),
     (t) => [index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId)],
 );

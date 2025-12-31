@@ -29,6 +29,13 @@
       "when": 1766672743498,
       "tag": "0003_naive_vampiro",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1767129492096,
+      "tag": "0004_naive_christian_walker",
+      "breakpoints": true
     }
   ]
 }
