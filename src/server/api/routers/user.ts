@@ -4,12 +4,18 @@ import { tokens, users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { generateToken } from "@/lib/token";
+import { TRPCError } from "@trpc/server";
 
 const userRouter = createTRPCRouter({
     createUser: publicProcedure.input(z.object({
         username: z.string(),
         password: z.string(),
     })).mutation(async ({ ctx, input }) => {
+        const userResult = await ctx.db.select().from(users).where(eq(users.username, input.username));
+        if (userResult && userResult.length > 0) {
+            throw new TRPCError({ code: "CONFLICT", message: "User already exists" });
+        }
+
         const hashedPassword = await hashPassword(input.password);
         await ctx.db.insert(users).values({ username: input.username, hashedPassword });
 
@@ -24,8 +30,10 @@ const userRouter = createTRPCRouter({
     })).query(async ({ ctx, input }) => {
         const userResult = await ctx.db.select().from(users).where(eq(users.username, input.username));
 
-        if (!userResult || userResult.length === 0 || !(await verifyPassword(input.password, userResult[0]!.hashedPassword))) {
+        if (!userResult || userResult.length === 0) {
             return null;
+        } else if (!(await verifyPassword(input.password, userResult[0]!.hashedPassword))) {
+            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid password" });
         }
 
         const tokenResult = await ctx.db.select().from(tokens).where(eq(tokens.username, input.username));
@@ -48,7 +56,7 @@ const userRouter = createTRPCRouter({
             return null;
         }
 
-        return { token: tokenResult[0]!.token };
+        return { token: tokenResult[0]!.token, username: tokenResult[0]!.username };
     }),
 });
 

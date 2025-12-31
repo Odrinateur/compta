@@ -19,6 +19,10 @@ export default function LoginInput() {
         try {
             await loginAction(username, password);
         } catch (err) {
+            const error = err as Error & { digest?: string };
+            if (error instanceof Error && error.digest?.startsWith("NEXT_REDIRECT")) {
+                return;
+            }
             setError(err instanceof Error ? err.message : "Une erreur est survenue");
             setIsLoading(false);
         }
