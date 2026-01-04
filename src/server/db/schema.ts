@@ -36,8 +36,8 @@ export const tokens = createTable(
     (t) => [index("tokens_created_at_idx").on(t.createdAt)],
 );
 
-export const categories = createTable(
-    "categories",
+export const countCategories = createTable(
+    "count_categories",
     (d) => ({
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
         name: d.text("name").notNull(),
@@ -46,8 +46,8 @@ export const categories = createTable(
     (t) => [index("categories_name_idx").on(t.name)],
 );
 
-export const months = createTable(
-    "months",
+export const countMonths = createTable(
+    "count_months",
     (d) => ({
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
         year: d.integer({ mode: "number" }).notNull(),
@@ -56,23 +56,23 @@ export const months = createTable(
     (t) => [index("months_year_month_idx").on(t.year, t.month)],
 );
 
-export const interactions = createTable(
-    "interactions",
+export const countInteractions = createTable(
+    "count_interactions",
     (d) => ({
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
         name: d.text("name").notNull(),
-        monthId: d.integer({ mode: "number" }).notNull().references(() => months.id),
-        categoryId: d.integer({ mode: "number" }).notNull().references(() => categories.id),
+        monthId: d.integer({ mode: "number" }).notNull().references(() => countMonths.id),
+        categoryId: d.integer({ mode: "number" }).notNull().references(() => countCategories.id),
         amount: d.integer({ mode: "number" }).notNull(),
         userId: d.text("user_id").notNull().references(() => users.username),
     }),
     (t) => [index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId)],
 );
 
-export const everyMonthInteractions = createTable(
-    "every_month_interactions",
+export const countEveryMonthInteractions = createTable(
+    "count_every_month_interactions",
     (d) => ({
-        idInteraction: d.integer({ mode: "number" }).primaryKey().references(() => interactions.id),
+        idInteraction: d.integer({ mode: "number" }).primaryKey().references(() => countInteractions.id),
         isActive: d.integer({ mode: "boolean" }).notNull().default(true),
     }),
     (t) => [index("every_month_interactions_id_interaction_idx").on(t.idInteraction)],

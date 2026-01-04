@@ -1,6 +1,6 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure, type createTRPCContext } from "@/server/api/trpc";
-import { categories, everyMonthInteractions, interactions, months, tokens } from "@/server/db/schema";
+import { countCategories, countEveryMonthInteractions, countInteractions, countMonths, tokens } from "@/server/db/schema";
 import { eq, and, getTableColumns } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -24,12 +24,12 @@ const monthRouter = createTRPCRouter({
 
         const monthInteractions = await ctx.db
             .select({
-                ...getTableColumns(interactions),
-                category: getTableColumns(categories),
+                ...getTableColumns(countInteractions),
+                category: getTableColumns(countCategories),
             })
-            .from(interactions)
-            .leftJoin(categories, eq(interactions.categoryId, categories.id))
-            .where(and(eq(interactions.monthId, month.id), eq(interactions.userId, user[0]!.username)));
+            .from(countInteractions)
+            .leftJoin(countCategories, eq(countInteractions.categoryId, countCategories.id))
+            .where(and(eq(countInteractions.monthId, month.id), eq(countInteractions.userId, user[0]!.username)));
 
         return {
             month: month,
@@ -47,7 +47,7 @@ const monthRouter = createTRPCRouter({
             throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
         }
 
-        return await ctx.db.select().from(categories);
+        return await ctx.db.select().from(countCategories);
     }),
     addInteraction: publicProcedure.input(z.object({
         token: z.string(),
@@ -61,7 +61,7 @@ const monthRouter = createTRPCRouter({
             throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
         }
 
-        const month = await ctx.db.select().from(months).where(eq(months.id, input.monthId));
+        const month = await ctx.db.select().from(countMonths).where(eq(countMonths.id, input.monthId));
         if (!month || month.length === 0) {
             throw new TRPCError({ code: "NOT_FOUND", message: "Month not found" });
         }
@@ -70,7 +70,7 @@ const monthRouter = createTRPCRouter({
 });
 
 export const getMonthByDate = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, userId: string, date: Date, withCreate = true) => {
-    const month = await ctx.db.select().from(months).where(and(eq(months.year, date.getFullYear()), eq(months.month, date.getMonth())));
+    const month = await ctx.db.select().from(countMonths).where(and(eq(countMonths.year, date.getFullYear()), eq(countMonths.month, date.getMonth() + 1)));
 
     if (!month || month.length === 0 && withCreate) {
         return await createNewMonth(ctx, userId, date);
@@ -80,18 +80,18 @@ export const getMonthByDate = async (ctx: Awaited<ReturnType<typeof createTRPCCo
 }
 
 const createNewMonth = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, userId: string, date: Date) => {
-    const month = await ctx.db.insert(months).values({ year: date.getFullYear(), month: date.getMonth() }).returning();
+    const month = await ctx.db.insert(countMonths).values({ year: date.getFullYear(), month: date.getMonth() + 1 }).returning();
 
     const defaultInteractions = await ctx.db
         .select(
-            getTableColumns(interactions),
+            getTableColumns(countInteractions),
         )
-        .from(interactions)
-        .innerJoin(everyMonthInteractions, eq(interactions.id, everyMonthInteractions.idInteraction))
-        .where(and(eq(everyMonthInteractions.isActive, true), eq(interactions.userId, userId)));
+        .from(countInteractions)
+        .innerJoin(countEveryMonthInteractions, eq(countInteractions.id, countEveryMonthInteractions.idInteraction))
+        .where(and(eq(countEveryMonthInteractions.isActive, true), eq(countInteractions.userId, userId)));
 
     for (const interaction of defaultInteractions) {
-        await ctx.db.insert(interactions).values({
+        await ctx.db.insert(countInteractions).values({
             name: interaction.name,
             categoryId: interaction.categoryId,
             amount: interaction.amount,
