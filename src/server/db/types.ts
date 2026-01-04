@@ -4,4 +4,9 @@ interface Category {
     default: boolean;
 }
 
-export type { Category };
+interface Tricount {
+    id: number;
+    name: string;
+}
+
+export type { Category, Tricount };

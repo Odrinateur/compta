@@ -32,7 +32,7 @@ export default async function RootLayout({
 
     return (
         <html lang="en" className={`${geist.variable} h-full overflow-hidden`}>
-            <body className="relative h-full overflow-x-hidden overflow-y-auto overscroll-contain">
+            <body className="relative h-full overflow-x-hidden overflow-y-auto">
                 <TRPCReactProvider>
                     <header className="border-b flex justify-center items-center">
                         <H2>compta</H2>

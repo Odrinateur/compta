@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c8a5d084-fab1-4f65-a861-ef45056502bd",
+  "id": "33a15d5c-5a25-4911-a8e9-5b9341ccf984",
   "prevId": "5a997b50-8d87-4002-a770-973975226b05",
   "tables": {
     "compta_count_categories": {
@@ -281,6 +281,281 @@
           "tableTo": "compta_users",
           "columnsFrom": [
             "username"
+          ],
+          "columnsTo": [
+            "username"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "compta_tri": {
+      "name": "compta_tri",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "tri_name_idx": {
+          "name": "tri_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "compta_tri_categories": {
+      "name": "compta_tri_categories",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "tri_categories_name_idx": {
+          "name": "tri_categories_name_idx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "compta_tri_interactions": {
+      "name": "compta_tri_interactions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "categoryId": {
+          "name": "categoryId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "triId": {
+          "name": "triId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "isRefunded": {
+          "name": "isRefunded",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "user_id_payer": {
+          "name": "user_id_payer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "compta_tri_interactions_categoryId_compta_tri_categories_id_fk": {
+          "name": "compta_tri_interactions_categoryId_compta_tri_categories_id_fk",
+          "tableFrom": "compta_tri_interactions",
+          "tableTo": "compta_tri_categories",
+          "columnsFrom": [
+            "categoryId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "compta_tri_interactions_triId_compta_tri_id_fk": {
+          "name": "compta_tri_interactions_triId_compta_tri_id_fk",
+          "tableFrom": "compta_tri_interactions",
+          "tableTo": "compta_tri",
+          "columnsFrom": [
+            "triId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "compta_tri_interactions_user_id_payer_compta_users_username_fk": {
+          "name": "compta_tri_interactions_user_id_payer_compta_users_username_fk",
+          "tableFrom": "compta_tri_interactions",
+          "tableTo": "compta_users",
+          "columnsFrom": [
+            "user_id_payer"
+          ],
+          "columnsTo": [
+            "username"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "compta_tri_users": {
+      "name": "compta_tri_users",
+      "columns": {
+        "idTri": {
+          "name": "idTri",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "tri_users_user_id_idx": {
+          "name": "tri_users_user_id_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "compta_tri_users_user_id_compta_users_username_fk": {
+          "name": "compta_tri_users_user_id_compta_users_username_fk",
+          "tableFrom": "compta_tri_users",
+          "tableTo": "compta_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "username"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "compta_tri_users_payees": {
+      "name": "compta_tri_users_payees",
+      "columns": {
+        "idInteraction": {
+          "name": "idInteraction",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id_payee": {
+          "name": "user_id_payee",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "compta_tri_users_payees_idInteraction_compta_tri_interactions_id_fk": {
+          "name": "compta_tri_users_payees_idInteraction_compta_tri_interactions_id_fk",
+          "tableFrom": "compta_tri_users_payees",
+          "tableTo": "compta_tri_interactions",
+          "columnsFrom": [
+            "idInteraction"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "compta_tri_users_payees_user_id_payee_compta_users_username_fk": {
+          "name": "compta_tri_users_payees_user_id_payee_compta_users_username_fk",
+          "tableFrom": "compta_tri_users_payees",
+          "tableTo": "compta_users",
+          "columnsFrom": [
+            "user_id_payee"
           ],
           "columnsTo": [
             "username"

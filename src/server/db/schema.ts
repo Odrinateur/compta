@@ -77,3 +77,54 @@ export const countEveryMonthInteractions = createTable(
     }),
     (t) => [index("every_month_interactions_id_interaction_idx").on(t.idInteraction)],
 );
+
+
+export const tri = createTable(
+    "tri",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        name: d.text("name").notNull(),
+    }),
+    (t) => [index("tri_name_idx").on(t.name)],
+);
+
+export const tri_users = createTable(
+    "tri_users",
+    (d) => ({
+        idTri: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        userId: d.text("user_id").notNull().references(() => users.username),
+        role: d.text("role").$type<"owner" | "writer" | "reader">().notNull(),
+    }),
+    (t) => [index("tri_users_user_id_idx").on(t.userId)],
+);
+
+export const tri_categories = createTable(
+    "tri_categories",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        name: d.text("name").notNull(),
+    }),
+    (t) => [index("tri_categories_name_idx").on(t.name)],
+);
+
+export const tri_interactions = createTable(
+    "tri_interactions",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        name: d.text("name").notNull(),
+        amount: d.integer({ mode: "number" }).notNull(),
+        categoryId: d.integer({ mode: "number" }).notNull().references(() => tri_categories.id),
+        triId: d.integer({ mode: "number" }).notNull().references(() => tri.id),
+        isRefunded: d.integer({ mode: "boolean" }).notNull().default(false),
+        userIdPayer: d.text("user_id_payer").notNull().references(() => users.username),
+    }),
+);
+
+export const tri_users_payees = createTable(
+    "tri_users_payees",
+    (d) => ({
+        idInteraction: d.integer({ mode: "number" }).primaryKey().references(() => tri_interactions.id),
+        userIdPayee: d.text("user_id_payee").notNull().references(() => users.username),
+        amount: d.integer({ mode: "number" }).notNull(),
+    }),
+);

@@ -9,6 +9,11 @@ export default async function Home() {
                     Count
                 </Button>
             </Link>
+            <Link href="/tricount">
+                <Button variant="link">
+                    Tricount
+                </Button>
+            </Link>
         </main>
     );
 }
