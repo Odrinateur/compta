@@ -1,9 +1,8 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/_components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/app/_components/ui/tooltip";
+import AddUserButton from "@/app/_components/tricount/users/add-button";
+import Avatars from "@/app/_components/tricount/users/avatars";
 import { H3 } from "@/app/_components/ui/typography";
 import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
-import { X } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function TricountPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,28 +21,14 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
 
     return (
         <>
-            <div className="flex justify-center gap-4 w-full">
+            <div className="relative flex justify-center gap-4 w-full">
                 <H3 className="text-center">
                     {tricount.name}
                 </H3>
                 {tricount.users.length > 0 && (
-                    <div className="*:data-[slot=avatar]:grayscale *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background flex -space-x-2">
-                        {tricount.users.map((inTricountUser: string) => (
-                            <Tooltip key={inTricountUser}>
-                                <TooltipTrigger asChild>
-                                    <Avatar>
-                                        <AvatarImage src="#" alt={inTricountUser} />
-                                        <AvatarFallback>{inTricountUser.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    {inTricountUser}
-                                    {inTricountUser !== user.username && (
-                                        <X className="size-4" />
-                                    )}
-                                </TooltipContent>
-                            </Tooltip>
-                        ))}
+                    <div className="right-0 absolute flex items-center gap-2">
+                        <AddUserButton user={user} idTri={Number(id)} />
+                        <Avatars users={tricount.users} user={user} idTri={Number(id)} />
                     </div>
                 )}
             </div>

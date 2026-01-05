@@ -9,4 +9,9 @@ interface Tricount {
     name: string;
 }
 
-export type { Category, Tricount };
+interface User {
+    token: string;
+    username: string;
+}
+
+export type { Category, Tricount, User };

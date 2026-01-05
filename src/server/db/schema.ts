@@ -2,7 +2,7 @@
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
 import { sql } from "drizzle-orm";
-import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
+import { index, primaryKey, sqliteTableCreator } from "drizzle-orm/sqlite-core";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -14,6 +14,8 @@ import { index, sqliteTableCreator } from "drizzle-orm/sqlite-core";
 export const createTable = sqliteTableCreator(
     (name) => `compta_${name}`,
 );
+
+// TODO: Check for primary keys and foreign keys
 
 export const users = createTable(
     "users",
@@ -91,11 +93,15 @@ export const tri = createTable(
 export const tri_users = createTable(
     "tri_users",
     (d) => ({
-        idTri: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        idTri: d.integer({ mode: "number" }).notNull().references(() => tri.id),
         userId: d.text("user_id").notNull().references(() => users.username),
         role: d.text("role").$type<"owner" | "writer" | "reader">().notNull(),
     }),
-    (t) => [index("tri_users_user_id_idx").on(t.userId)],
+    (t) => [
+        primaryKey({ columns: [t.idTri, t.userId] }),
+        index("tri_users_user_id_idx").on(t.userId),
+        index("tri_users_id_tri_idx").on(t.idTri),
+    ],
 );
 
 export const tri_categories = createTable(

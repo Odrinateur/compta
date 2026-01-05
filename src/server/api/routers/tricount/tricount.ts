@@ -1,7 +1,7 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure, type createTRPCContext } from "@/server/api/trpc";
 import { tokens, tri, tri_categories, tri_interactions, tri_users, users } from "@/server/db/schema";
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 
@@ -9,6 +9,7 @@ const tricountRouter = createTRPCRouter({
     getTricountsByUser: publicProcedure.input(z.object({
         token: z.string(),
     })).query(async ({ ctx, input }) => {
+        // TODO: factorize this into a helper function
         const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
         if (!user || user.length === 0) {
             throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
@@ -116,6 +117,23 @@ const tricountRouter = createTRPCRouter({
         await hasAccess(ctx, user[0]!.username, input.idTri, "owner");
 
         await ctx.db.delete(tri_users).where(and(eq(tri_users.userId, input.userId), eq(tri_users.idTri, input.idTri)));
+    }),
+    getUsersNotInTricount: publicProcedure.input(z.object({
+        token: z.string(),
+        idTri: z.number(),
+    })).query(async ({ ctx, input }) => {
+        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
+        if (!user || user.length === 0) {
+            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
+        }
+
+        await hasAccess(ctx, user[0]!.username, input.idTri, "owner");
+
+        return await ctx.db
+            .select({ users: users.username })
+            .from(users)
+            .leftJoin(tri_users, and(eq(tri_users.userId, users.username), eq(tri_users.idTri, input.idTri)))
+            .where(isNull(tri_users.userId));
     }),
 });
 
