@@ -7,16 +7,31 @@ import { X } from "lucide-react";
 import { api } from "@/trpc/react";
 
 interface AvatarsProps {
-    users: string[];
     user: User;
     idTri: number;
 }
 
-export default function Avatars({ users, user, idTri }: AvatarsProps) {
-    const removeUserFromTricountMutation = api.tricount.removeUserFromTricount.useMutation();
+export default function Avatars({ user, idTri }: AvatarsProps) {
+    const utils = api.useUtils();
+
+    const { data: users, isLoading } = api.tricount.getUsersInTricount.useQuery({
+        token: user.token,
+        idTri,
+    });
+
+    const removeUserFromTricountMutation = api.tricount.removeUserFromTricount.useMutation({
+        onSuccess: async () => {
+            await utils.tricount.getUsersInTricount.invalidate({ token: user.token, idTri });
+            await utils.tricount.getUsersNotInTricount.invalidate({ token: user.token, idTri });
+        }
+    });
 
     const handleRemoveUserFromTricount = async (userId: string) => {
         await removeUserFromTricountMutation.mutateAsync({ token: user.token, idTri, userId });
+    }
+
+    if (isLoading || !users) {
+        return null;
     }
 
     return (

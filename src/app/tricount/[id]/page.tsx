@@ -25,12 +25,10 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
                 <H3 className="text-center">
                     {tricount.name}
                 </H3>
-                {tricount.users.length > 0 && (
-                    <div className="right-0 absolute flex items-center gap-2">
-                        <AddUserButton user={user} idTri={Number(id)} />
-                        <Avatars users={tricount.users} user={user} idTri={Number(id)} />
-                    </div>
-                )}
+                <div className="right-0 absolute flex items-center gap-2">
+                    <AddUserButton user={user} idTri={Number(id)} />
+                    <Avatars user={user} idTri={Number(id)} />
+                </div>
             </div>
         </>
     );

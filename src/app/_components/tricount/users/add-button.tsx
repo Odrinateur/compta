@@ -19,7 +19,14 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
     const [role, setRole] = useState<"writer" | "reader">("reader");
     const [open, setOpen] = useState(false);
 
-    const addUserMutation = api.tricount.addUserToTricount.useMutation();
+    const utils = api.useUtils();
+
+    const addUserMutation = api.tricount.addUserToTricount.useMutation({
+        onSuccess: async () => {
+            await utils.tricount.getUsersInTricount.invalidate({ token: user.token, idTri });
+            await utils.tricount.getUsersNotInTricount.invalidate({ token: user.token, idTri });
+        }
+    });
 
     const { data: usersNotInTricount, refetch } = api.tricount.getUsersNotInTricount.useQuery(
         { token: user.token, idTri },
@@ -41,9 +48,6 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
         await addUserMutation.mutateAsync({ token: user.token, idTri, userId: username, role });
 
         setOpen(false);
-
-        // TODO: invalidate tricount
-        // TODO: make multiple requests to get user and get tricount
     }
 
     return (

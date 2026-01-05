@@ -1,5 +1,5 @@
 import z from "zod";
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { type createTRPCContext, createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { tokens, users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -60,4 +60,13 @@ const userRouter = createTRPCRouter({
     }),
 });
 
+const getUserIfExist = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, token: string) => {
+    const user = await ctx.db.select().from(tokens).where(eq(tokens.token, token));
+    if (!user || user.length === 0) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
+    }
+    return user[0]!;
+}
+
 export default userRouter;
+export { getUserIfExist };

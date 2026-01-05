@@ -1,26 +1,24 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure, type createTRPCContext } from "@/server/api/trpc";
-import { countCategories, countEveryMonthInteractions, countInteractions, countMonths, tokens } from "@/server/db/schema";
+import { countCategories, countEveryMonthInteractions, countInteractions, countMonths } from "@/server/db/schema";
 import { eq, and, getTableColumns } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getUserIfExist } from "../user";
 
 const monthRouter = createTRPCRouter({
     getCurrentMonth: publicProcedure.input(z.object({
         token: z.string(),
     })).query(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        const user = await getUserIfExist(ctx, input.token);
 
         const date = new Date();
-        const month = await getMonthByDate(ctx, user[0]!.username, date);
+        const month = await getMonthByDate(ctx, user.username, date);
 
         const lastMonthDate = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-        const previousMonth = await getMonthByDate(ctx, user[0]!.username, lastMonthDate, false);
+        const previousMonth = await getMonthByDate(ctx, user.username, lastMonthDate, false);
 
         const nextMonthDate = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-        const nextMonth = await getMonthByDate(ctx, user[0]!.username, nextMonthDate, false);
+        const nextMonth = await getMonthByDate(ctx, user.username, nextMonthDate, false);
 
         const monthInteractions = await ctx.db
             .select({
@@ -29,7 +27,7 @@ const monthRouter = createTRPCRouter({
             })
             .from(countInteractions)
             .leftJoin(countCategories, eq(countInteractions.categoryId, countCategories.id))
-            .where(and(eq(countInteractions.monthId, month.id), eq(countInteractions.userId, user[0]!.username)));
+            .where(and(eq(countInteractions.monthId, month.id), eq(countInteractions.userId, user.username)));
 
         return {
             month: month,
@@ -37,18 +35,16 @@ const monthRouter = createTRPCRouter({
             nextMonthId: nextMonth?.id ?? null,
             interactions: monthInteractions,
         }
-
     }),
+
     getCategories: publicProcedure.input(z.object({
         token: z.string(),
     })).query(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        await getUserIfExist(ctx, input.token);
 
         return await ctx.db.select().from(countCategories);
     }),
+
     addInteraction: publicProcedure.input(z.object({
         token: z.string(),
         monthId: z.number(),
@@ -56,20 +52,16 @@ const monthRouter = createTRPCRouter({
         categoryId: z.number(),
         amount: z.number(),
     })).mutation(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        await getUserIfExist(ctx, input.token);
 
         const month = await ctx.db.select().from(countMonths).where(eq(countMonths.id, input.monthId));
         if (!month || month.length === 0) {
             throw new TRPCError({ code: "NOT_FOUND", message: "Month not found" });
         }
-
     }),
 });
 
-export const getMonthByDate = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, userId: string, date: Date, withCreate = true) => {
+const getMonthByDate = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, userId: string, date: Date, withCreate = true) => {
     const month = await ctx.db.select().from(countMonths).where(and(eq(countMonths.year, date.getFullYear()), eq(countMonths.month, date.getMonth() + 1)));
 
     if (!month || month.length === 0 && withCreate) {

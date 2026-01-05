@@ -1,19 +1,16 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure, type createTRPCContext } from "@/server/api/trpc";
-import { tokens, tri, tri_categories, tri_interactions, tri_users, users } from "@/server/db/schema";
+import { tri, tri_categories, tri_interactions, tri_users, users } from "@/server/db/schema";
 import { and, eq, getTableColumns, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getUserIfExist } from "../user";
 
 
 const tricountRouter = createTRPCRouter({
     getTricountsByUser: publicProcedure.input(z.object({
         token: z.string(),
     })).query(async ({ ctx, input }) => {
-        // TODO: factorize this into a helper function
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        const user = await getUserIfExist(ctx, input.token);
 
         return await ctx.db
             .select({
@@ -21,18 +18,16 @@ const tricountRouter = createTRPCRouter({
             })
             .from(tri)
             .leftJoin(tri_users, eq(tri.id, tri_users.idTri))
-            .where(eq(tri_users.userId, user[0]!.username));
+            .where(eq(tri_users.userId, user.username));
     }),
+
     getTricountById: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
     })).query(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user[0]!.username, input.idTri);
+        await hasAccess(ctx, user.username, input.idTri);
 
         const triData = await ctx.db
             .select({
@@ -46,14 +41,6 @@ const tricountRouter = createTRPCRouter({
             throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
         }
 
-        const tricountUsers = await ctx.db
-            .select({
-                username: users.username,
-            })
-            .from(tri_users)
-            .leftJoin(users, eq(tri_users.userId, users.username))
-            .where(eq(tri_users.idTri, input.idTri));
-
         const interactions = await ctx.db
             .select({
                 ...getTableColumns(tri_interactions),
@@ -65,37 +52,51 @@ const tricountRouter = createTRPCRouter({
 
         return {
             ...triData[0],
-            users: tricountUsers.map(u => u.username).filter((u): u is string => u !== null),
             interactions,
         };
     }),
+
+    getUsersInTricount: publicProcedure.input(z.object({
+        token: z.string(),
+        idTri: z.number(),
+    })).query(async ({ ctx, input }) => {
+        const user = await getUserIfExist(ctx, input.token);
+
+        await hasAccess(ctx, user.username, input.idTri);
+
+        const usersInTricount = await ctx.db
+            .select({
+                username: users.username,
+            })
+            .from(tri_users)
+            .innerJoin(users, eq(tri_users.userId, users.username))
+            .where(eq(tri_users.idTri, input.idTri));
+
+        return usersInTricount.map(u => u.username);
+    }),
+
     createTricount: publicProcedure.input(z.object({
         token: z.string(),
         name: z.string(),
     })).mutation(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        const user = await getUserIfExist(ctx, input.token);
 
         const triData = await ctx.db.insert(tri).values({ name: input.name }).returning();
 
-        await ctx.db.insert(tri_users).values({ userId: user[0]!.username, idTri: triData[0]!.id, role: "owner" }).returning();
+        await ctx.db.insert(tri_users).values({ userId: user.username, idTri: triData[0]!.id, role: "owner" }).returning();
 
         return triData[0]!.id;
     }),
+
     addUserToTricount: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
         userId: z.string(),
         role: z.enum(["writer", "reader"]),
     })).mutation(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user[0]!.username, input.idTri, "owner");
+        await hasAccess(ctx, user.username, input.idTri, "owner");
 
         const triData = await ctx.db.select().from(tri).where(eq(tri.id, input.idTri));
         if (!triData || triData.length === 0) {
@@ -104,30 +105,26 @@ const tricountRouter = createTRPCRouter({
 
         await ctx.db.insert(tri_users).values({ userId: input.userId, idTri: triData[0]!.id, role: input.role });
     }),
+
     removeUserFromTricount: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
         userId: z.string(),
     })).mutation(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user[0]!.username, input.idTri, "owner");
+        await hasAccess(ctx, user.username, input.idTri, "owner");
 
         await ctx.db.delete(tri_users).where(and(eq(tri_users.userId, input.userId), eq(tri_users.idTri, input.idTri)));
     }),
+
     getUsersNotInTricount: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
     })).query(async ({ ctx, input }) => {
-        const user = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
-        if (!user || user.length === 0) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
-        }
+        const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user[0]!.username, input.idTri, "owner");
+        await hasAccess(ctx, user.username, input.idTri, "owner");
 
         return await ctx.db
             .select({ users: users.username })
