@@ -1,0 +1,1 @@
+ALTER TABLE `compta_tri_interactions` ADD `date` text DEFAULT (current_timestamp) NOT NULL;

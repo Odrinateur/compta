@@ -14,4 +14,14 @@ interface User {
     username: string;
 }
 
-export type { Category, Tricount, User };
+type Role = "owner" | "writer" | "reader";
+type RoleWithAny = Role | "any";
+type RoleWithoutOwner = "writer" | "reader";
+const roleHierarchy: Record<Role, number> = {
+    owner: 3,
+    writer: 2,
+    reader: 1,
+};
+
+export type { Category, Tricount, User, Role, RoleWithAny, RoleWithoutOwner };
+export { roleHierarchy };
