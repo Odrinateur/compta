@@ -4,6 +4,7 @@ import { tri, tri_categories, tri_interactions, tri_users, users } from "@/serve
 import { and, eq, getTableColumns, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
+import { roleHierarchy, type RoleWithAny } from "@/server/db/types";
 
 
 const tricountRouter = createTRPCRouter({
@@ -47,32 +48,13 @@ const tricountRouter = createTRPCRouter({
                 category: getTableColumns(tri_categories),
             })
             .from(tri_interactions)
-            .leftJoin(tri_categories, eq(tri_interactions.categoryId, tri_categories.id))
+            .innerJoin(tri_categories, eq(tri_interactions.categoryId, tri_categories.id))
             .where(eq(tri_interactions.triId, input.idTri));
 
         return {
             ...triData[0],
             interactions,
         };
-    }),
-
-    getUsersInTricount: publicProcedure.input(z.object({
-        token: z.string(),
-        idTri: z.number(),
-    })).query(async ({ ctx, input }) => {
-        const user = await getUserIfExist(ctx, input.token);
-
-        await hasAccess(ctx, user.username, input.idTri);
-
-        const usersInTricount = await ctx.db
-            .select({
-                username: users.username,
-            })
-            .from(tri_users)
-            .innerJoin(users, eq(tri_users.userId, users.username))
-            .where(eq(tri_users.idTri, input.idTri));
-
-        return usersInTricount.map(u => u.username);
     }),
 
     createTricount: publicProcedure.input(z.object({
@@ -118,6 +100,25 @@ const tricountRouter = createTRPCRouter({
         await ctx.db.delete(tri_users).where(and(eq(tri_users.userId, input.userId), eq(tri_users.idTri, input.idTri)));
     }),
 
+    getUsersInTricount: publicProcedure.input(z.object({
+        token: z.string(),
+        idTri: z.number(),
+    })).query(async ({ ctx, input }) => {
+        const user = await getUserIfExist(ctx, input.token);
+
+        await hasAccess(ctx, user.username, input.idTri);
+
+        const usersInTricount = await ctx.db
+            .select({
+                username: users.username,
+            })
+            .from(tri_users)
+            .innerJoin(users, eq(tri_users.userId, users.username))
+            .where(eq(tri_users.idTri, input.idTri));
+
+        return usersInTricount.map(u => u.username);
+    }),
+
     getUsersNotInTricount: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
@@ -135,16 +136,26 @@ const tricountRouter = createTRPCRouter({
 });
 
 
-const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, idTri: number, checkRole: "owner" | "writer" | "reader" | "any" = "any") => {
+const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, idTri: number, checkRole: RoleWithAny = "any") => {
     const userAccess = await ctx.db
         .select()
         .from(tri_users)
         .where(and(eq(tri_users.userId, username), eq(tri_users.idTri, idTri)))
         .limit(1);
 
-    if ((!userAccess || userAccess.length === 0) || (checkRole !== "any" && userAccess[0]!.role !== checkRole)) {
+    if (!userAccess || userAccess.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
+    }
+
+    if (checkRole === "any") {
+        return;
+    }
+
+    const userRole = userAccess[0]!.role;
+    if (roleHierarchy[userRole] < roleHierarchy[checkRole]) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
     }
 }
 
 export default tricountRouter;
+export { hasAccess };
