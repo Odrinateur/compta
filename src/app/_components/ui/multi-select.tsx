@@ -464,7 +464,7 @@ const MultipleSelector = ({
                             >
                                 {option.label}
                                 <button
-                                    className='border border-transparent focus-visible:border-ring rounded-r-md outline-hidden outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 -right-px absolute -inset-y-px flex justify-center items-center p-0 size-7 transition-[color,box-shadow] text-muted-foreground/80 hover:text-foreground'
+                                    className='border border-transparent focus-visible:border-ring rounded-r-md outline-hidden outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 -right-px absolute -inset-y-px flex justify-center items-center p-0 hover:cursor-pointer size-7 transition-[color,box-shadow] text-muted-foreground/80 hover:text-foreground'
                                     onKeyDown={e => {
                                         if (e.key === 'Enter') {
                                             handleUnselect(option)
@@ -526,7 +526,7 @@ const MultipleSelector = ({
                             onChange?.(selected.filter(s => s.fixed))
                         }}
                         className={cn(
-                            'border border-transparent focus-visible:border-ring rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 top-0 right-0 absolute flex justify-center items-center size-9 transition-[color,box-shadow] text-muted-foreground/80 hover:text-foreground',
+                            'border border-transparent focus-visible:border-ring rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 top-0 right-0 absolute flex justify-center items-center hover:cursor-pointer size-9 transition-[color,box-shadow] text-muted-foreground/80 hover:text-foreground',
                             (hideClearAllButton ||
                                 disabled ||
                                 selected.length < 1 ||

@@ -35,7 +35,7 @@ export default function CreateTricountButton({ token }: CreateTricountButtonProp
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button size="icon">
                     <PlusIcon className="size-4" />
                 </Button>
             </DialogTrigger>

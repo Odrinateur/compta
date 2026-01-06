@@ -5,7 +5,7 @@ import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
 import { redirect } from "next/navigation";
 import { Button } from "@/app/_components/ui/button";
-import { ChartBarIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon, ChartBarIcon, PlusIcon } from "lucide-react";
 import { TrictountInteractionGridCard } from "@/app/_components/tricount/interaction/card";
 
 export default async function TricountPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +25,12 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
     return (
         <>
             <div className="relative flex justify-center gap-2 w-full">
-                <div className="left-0 absolute">
+                <div className="left-0 absolute flex items-center gap-2">
+                    <Link href="/tricount">
+                        <Button size="icon">
+                            <ArrowLeftIcon />
+                        </Button>
+                    </Link>
                     <Link href={`/tricount/${id}/interaction/new`}>
                         <Button size="icon">
                             <PlusIcon />
