@@ -43,7 +43,7 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
                         </Button>
                     </Link>
                 </div>
-                <div className="flex justify-center items-center gap-2">
+                <div className="flex justify-center items-center gap-2 mt-10 sm:mt-0">
                     <TricountName user={user} idTri={Number(id)} initialName={tricount.name} />
                     <EditNameButton user={user} idTri={Number(id)} currentName={tricount.name} />
                 </div>

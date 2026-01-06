@@ -123,8 +123,8 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                 />
                             </div>
 
-                            <div className="gap-4 grid grid-cols-2">
-                                <div className="space-y-2">
+                            <div className="flex sm:flex-row flex-col gap-4">
+                                <div className="space-y-2 w-full">
                                     <Label htmlFor="date" className="font-medium text-sm">
                                         Date
                                     </Label>
@@ -133,10 +133,11 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                         setDate={(date) => {
                                             if (date) setDate(date);
                                         }}
+                                        className="w-full"
                                     />
                                 </div>
 
-                                <div className="space-y-2">
+                                <div className="space-y-2 w-full">
                                     <Label htmlFor="amount" className="font-medium text-sm">
                                         Montant
                                     </Label>
