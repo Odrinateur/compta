@@ -152,6 +152,18 @@ const tricountRouter = createTRPCRouter({
         return triData[0]!.id;
     }),
 
+    updateTricount: publicProcedure.input(z.object({
+        token: z.string(),
+        idTri: z.number(),
+        name: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+        const user = await getUserIfExist(ctx, input.token);
+
+        await hasAccess(ctx, user.username, input.idTri, "owner");
+
+        await ctx.db.update(tri).set({ name: input.name }).where(eq(tri.id, input.idTri));
+    }),
+
     addUserToTricount: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),

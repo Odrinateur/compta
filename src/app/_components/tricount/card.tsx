@@ -1,22 +1,43 @@
+"use client";
+
 import { Card, CardTitle } from "../ui/card";
 import Link from "next/link";
 import { Skeleton } from "../ui/skeleton";
-import { type Tricount } from "@/server/db/types";
-
+import { type Tricount, type User } from "@/server/db/types";
+import EditNameButton from "./edit-name-button";
+import { api } from "@/trpc/react";
 
 interface TricountCardProps {
     tricount: Tricount;
+    user: User | null;
 }
 
-function TricountCard({ tricount }: TricountCardProps) {
+function TricountCard({ tricount, user }: TricountCardProps) {
     return (
-        <Link href={`/tricount/${tricount.id}`} key={tricount.id} className="w-full">
-            <Card className="flex justify-center items-center gap-0 py-0 min-h-[80px]">
-                <div className="flex justify-center items-center px-6 w-full h-full">
-                    <CardTitle className="m-0 text-center leading-normal">{tricount.name}</CardTitle>
+        <div key={tricount.id} className="relative w-full">
+            <Link href={`/tricount/${tricount.id}`} className="block w-full">
+                <Card className="flex justify-center items-center gap-0 py-0 min-h-[80px]">
+                    <div className="flex justify-center items-center px-6 w-full h-full">
+                        <CardTitle className="m-0 text-center leading-normal">{tricount.name}</CardTitle>
+                    </div>
+                </Card>
+            </Link>
+            {user && (
+                <div
+                    className="top-2 right-2 z-10 absolute"
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                >
+                    <EditNameButton user={user} idTri={tricount.id} currentName={tricount.name} />
                 </div>
-            </Card>
-        </Link>
+            )}
+        </div>
     )
 }
 
@@ -31,11 +52,17 @@ function TricountCardSkeleton() {
 }
 
 
-function TricountCardGrid({ tricounts }: { tricounts: Tricount[] }) {
+function TricountCardGrid({ user }: { user: User }) {
+    const { data: tricounts } = api.tricount.getTricountsByUser.useQuery({ token: user.token });
+
+    if (!tricounts) {
+        return <TricountCardGridSkeleton />;
+    }
+
     return (
         <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
-            {tricounts.map((tricount) => (
-                <TricountCard tricount={tricount} key={tricount.id} />
+            {tricounts?.map((tricount) => (
+                <TricountCard tricount={tricount} user={user} key={tricount.id} />
             ))}
         </div>
     )

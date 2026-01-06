@@ -1,6 +1,8 @@
 import AddUserButton from "@/app/_components/tricount/users/add-button";
 import Avatars from "@/app/_components/tricount/users/avatars";
-import { H3, Link } from "@/app/_components/ui/typography";
+import EditNameButton from "@/app/_components/tricount/edit-name-button";
+import TricountName from "@/app/_components/tricount/name";
+import { Link } from "@/app/_components/ui/typography";
 import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
 import { redirect } from "next/navigation";
@@ -37,9 +39,10 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
                         </Button>
                     </Link>
                 </div>
-                <H3 className="text-center">
-                    {tricount.name}
-                </H3>
+                <div className="flex items-center gap-2">
+                    <TricountName user={user} idTri={Number(id)} initialName={tricount.name} />
+                    <EditNameButton user={user} idTri={Number(id)} currentName={tricount.name} />
+                </div>
                 <Link href={`/tricount/${id}/stats`}>
                     <Button size="icon" variant="ghost">
                         <ChartBarIcon />

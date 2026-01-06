@@ -35,7 +35,9 @@ export default async function RootLayout({
             <body className="relative h-full overflow-x-hidden overflow-y-auto">
                 <TRPCReactProvider>
                     <header className="border-b flex justify-center items-center">
-                        <H2>compta</H2>
+                        <H2>
+                            {pathname === "/" ? "compte" : pathname.split("/")[1]}
+                        </H2>
                     </header>
                     <HydrateClient>
                         {children}

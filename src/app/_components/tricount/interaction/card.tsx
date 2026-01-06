@@ -31,17 +31,17 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
     });
 
     return (
-        <Card className="flex sm:flex-row flex-col items-start sm:items-center gap-3 px-4 py-3">
-            <Checkbox
-                checked={interaction.isRefunded}
-                onCheckedChange={(checked) => void setInteractionRefundedMutation.mutate({ token: user.token, idTri: interaction.triId, idInteraction: interaction.id, isRefunded: checked as boolean })}
-                className="size-4"
-            />
-            <H3
-                className="sm:min-w-[140px] sm:max-w-[200px] font-semibold text-base truncate shrink-0"
-                style={interaction.isRefunded ? { opacity: 0.6, pointerEvents: "none" } : undefined}>
-                {interaction.name}
-            </H3>
+        <Card className="flex sm:flex-row flex-col items-start sm:items-center gap-3 px-4 py-3" style={interaction.isRefunded ? { opacity: 0.6, pointerEvents: "none" } : undefined}>
+            <div className="flex items-center gap-2">
+                <Checkbox
+                    checked={interaction.isRefunded}
+                    onCheckedChange={(checked) => void setInteractionRefundedMutation.mutate({ token: user.token, idTri: interaction.triId, idInteraction: interaction.id, isRefunded: checked as boolean })}
+                    className="size-4"
+                />
+                <H3 className="sm:min-w-[140px] sm:max-w-[200px] font-semibold text-base truncate shrink-0">
+                    {interaction.name}
+                </H3>
+            </div>
 
             <div className="flex sm:flex-row flex-col flex-1 sm:items-center gap-1.5 sm:gap-4 min-w-0">
                 <Tooltip>
