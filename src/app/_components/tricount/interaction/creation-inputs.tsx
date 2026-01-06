@@ -84,6 +84,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
             usersPayees: usersPayees.map((user) => ({
                 userId: user.value,
             })),
+            date: date.toISOString(),
         });
     };
 

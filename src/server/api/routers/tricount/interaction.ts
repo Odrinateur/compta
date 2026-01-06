@@ -71,6 +71,7 @@ const tricountInteractionRouter = createTRPCRouter({
         usersPayees: z.array(z.object({
             userId: z.string(),
         })),
+        date: z.string(),
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
@@ -85,6 +86,7 @@ const tricountInteractionRouter = createTRPCRouter({
             userIdPayer: input.userIdPayer,
             isRefunded: input.isRefunded,
             triId: input.idTri,
+            date: input.date,
         }).returning();
 
         if (!newInteraction) {
