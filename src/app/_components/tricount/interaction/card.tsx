@@ -11,10 +11,11 @@ import { Button } from "../../ui/button";
 import { useState, useMemo } from "react";
 import { Checkbox } from "../../ui/checkbox";
 import { H3 } from "../../ui/typography";
-import { formatAmount, formatDate } from "@/lib/utils";
+import { formatAmount } from "@/lib/utils";
 import OneAvatar from "../users/one-avatar";
 import { AvatarsWithInteraction } from "../users/avatars";
 import { Badge } from "../../ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
 
 interface TricountInteractionCardProps {
     interaction: TricountInteraction;
@@ -41,7 +42,7 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
 
     return (
         <Card className="flex sm:flex-row flex-col items-start sm:items-center gap-3 px-4 py-3" style={interaction.isRefunded ? { opacity: 0.6 } : undefined}>
-            <div className="flex items-center gap-2">
+            <div className="flex justify-between items-center gap-2">
                 <Checkbox
                     checked={interaction.isRefunded}
                     onCheckedChange={(checked) => void setInteractionRefundedMutation.mutate({ token: user.token, idTri: interaction.triId, idInteraction: interaction.id, isRefunded: checked as boolean })}
@@ -52,15 +53,11 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
                 </H3>
             </div>
 
-            <div className="flex sm:flex-row flex-col flex-1 sm:items-center gap-1.5 sm:gap-4 min-w-0">
-                <OneAvatar user={interaction.userPayer} currentUser={user} />
-                <p className="text-muted-foreground text-xs">
-                    {formatDate(interaction.date)}
-                    <span className="mx-1.5">·</span>
-                    <Badge variant="outline">
-                        {interaction.category.name}
-                    </Badge>
-                </p>
+            <div className="flex items-center gap-1.5 sm:gap-4 min-w-0">
+                <OneAvatar user={{ username: interaction.usernamePayer }} currentUser={user} />
+                <Badge variant="outline">
+                    {interaction.category.name}
+                </Badge>
             </div>
 
             <div className="flex justify-between sm:justify-end items-center gap-3 sm:gap-4 w-full sm:w-auto">
@@ -71,23 +68,6 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
                         {formatAmount(interaction.amount)}
                     </span>
                 </div>
-            </div>
-
-            <div className="md:hidden flex flex-col gap-1 w-full">
-                {interaction.usersPayees.map((userPayee) => {
-                    const isCurrentUser = user.username === userPayee.username;
-                    return (
-                        <div key={userPayee.username} className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs">
-                                {userPayee.username}
-                                {isCurrentUser && <span className="text-muted-foreground/70"> (moi)</span>}
-                            </span>
-                            <span className="font-medium tabular-nums text-xs">
-                                {formatAmount(userPayee.amount)}
-                            </span>
-                        </div>
-                    );
-                })}
             </div>
         </Card>
     );
@@ -140,7 +120,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
         }
 
         if (filterPayer !== "all") {
-            filtered = filtered.filter(interaction => interaction.userPayer.username === filterPayer);
+            filtered = filtered.filter(interaction => interaction.usernamePayer === filterPayer);
         }
 
         if (filterCategory !== "all") {
@@ -160,7 +140,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                 case "date-asc":
                     return new Date(a.date).getTime() - new Date(b.date).getTime();
                 case "payer":
-                    return a.userPayer.username.localeCompare(b.userPayer.username);
+                    return a.usernamePayer.localeCompare(b.usernamePayer);
                 case "category":
                     return a.category.name.localeCompare(b.category.name);
                 default:
@@ -211,95 +191,104 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
 
     return (
         <div className="flex flex-col gap-4 w-full">
-            <div className="flex flex-wrap gap-2 w-full">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search className="top-1/2 left-3 absolute pointer-events-none size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder="Rechercher..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-background shadow-xs border-input pr-9 pl-9 h-9"
-                    />
-                    {searchQuery && (
-                        <button
-                            onClick={() => setSearchQuery("")}
-                            className="top-1/2 right-2 absolute transition-colors -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                            <X className="size-4" />
-                        </button>
-                    )}
-                </div>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="filters">
+                    <AccordionTrigger>Filtres</AccordionTrigger>
+                    <AccordionContent>
+                        <div className="flex flex-wrap gap-2 w-full">
+                            <div className="relative flex-1 min-w-[200px]">
+                                <Search className="top-1/2 left-3 absolute pointer-events-none size-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    type="text"
+                                    placeholder="Rechercher..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="bg-background shadow-xs border-input pr-9 pl-9 h-9"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery("")}
+                                        className="top-1/2 right-2 absolute transition-colors -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="size-4" />
+                                    </button>
+                                )}
+                            </div>
 
-                <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-                    <SelectTrigger className="w-full sm:w-[180px] h-9">
-                        <ArrowUpDown className="mr-2 size-4" />
-                        <SelectValue placeholder="Trier par" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="date-desc">Date (récent)</SelectItem>
-                        <SelectItem value="date-asc">Date (ancien)</SelectItem>
-                        <SelectItem value="payer">Payé par</SelectItem>
-                        <SelectItem value="category">Catégorie</SelectItem>
-                    </SelectContent>
-                </Select>
+                            <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+                                <SelectTrigger className="w-full sm:w-[180px] h-9">
+                                    <div className="flex items-center gap-2 w-full">
+                                        <ArrowUpDown className="mr-2 size-4" />
+                                        <SelectValue className="flex-1" placeholder="Trier par" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="date-desc">Date (récent)</SelectItem>
+                                    <SelectItem value="date-asc">Date (ancien)</SelectItem>
+                                    <SelectItem value="payer">Payé par</SelectItem>
+                                    <SelectItem value="category">Catégorie</SelectItem>
+                                </SelectContent>
+                            </Select>
 
-                <Select value={filterPayer} onValueChange={setFilterPayer}>
-                    <SelectTrigger className="w-full sm:w-[180px] h-9">
-                        <SelectValue placeholder="Payé par" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tous (utilisateurs)</SelectItem>
-                        {users?.map((user) => (
-                            <SelectItem key={user.username} value={user.username}>
-                                {user.username}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                            <Select value={filterPayer} onValueChange={setFilterPayer}>
+                                <SelectTrigger className="w-full sm:w-[180px] h-9">
+                                    <SelectValue placeholder="Payé par" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tous (utilisateurs)</SelectItem>
+                                    {users?.map((user) => (
+                                        <SelectItem key={user.username} value={user.username}>
+                                            {user.username}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger className="w-full sm:w-[180px] h-9">
-                        <SelectValue placeholder="Catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Toutes (catégories)</SelectItem>
-                        {categories?.map((category) => (
-                            <SelectItem key={category.id} value={String(category.id)}>
-                                {category.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                            <Select value={filterCategory} onValueChange={setFilterCategory}>
+                                <SelectTrigger className="w-full sm:w-[180px] h-9">
+                                    <SelectValue placeholder="Catégorie" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Toutes (catégories)</SelectItem>
+                                    {categories?.map((category) => (
+                                        <SelectItem key={category.id} value={String(category.id)}>
+                                            {category.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                <Select value={filterRefunded} onValueChange={setFilterRefunded}>
-                    <SelectTrigger className="w-full sm:w-[180px] h-9">
-                        <SelectValue placeholder="Remboursement" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tous (remboursements)</SelectItem>
-                        <SelectItem value="refunded">Remboursés</SelectItem>
-                        <SelectItem value="not-refunded">Non remboursés</SelectItem>
-                    </SelectContent>
-                </Select>
+                            <Select value={filterRefunded} onValueChange={setFilterRefunded}>
+                                <SelectTrigger className="w-full sm:w-[180px] h-9">
+                                    <SelectValue placeholder="Remboursement" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Tous (remboursements)</SelectItem>
+                                    <SelectItem value="refunded">Remboursés</SelectItem>
+                                    <SelectItem value="not-refunded">Non remboursés</SelectItem>
+                                </SelectContent>
+                            </Select>
 
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9"
-                    onClick={() => {
-                        setSearchQuery("");
-                        setFilterPayer("all");
-                        setFilterCategory("all");
-                        setFilterRefunded("all");
-                    }}
-                    disabled={!hasActiveFilters}
-                >
-                    <X className="mr-2 size-4" />
-                    Réinitialiser
-                </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-9"
+                                onClick={() => {
+                                    setSearchQuery("");
+                                    setFilterPayer("all");
+                                    setFilterCategory("all");
+                                    setFilterRefunded("all");
+                                }}
+                                disabled={!hasActiveFilters}
+                            >
+                                <X className="mr-2 size-4" />
+                                Réinitialiser
+                            </Button>
 
-            </div>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
 
             {sortedDates.length > 0 ? (
                 <div className="flex flex-col gap-6 mx-auto w-full max-w-[700px]">

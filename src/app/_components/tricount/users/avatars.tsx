@@ -1,6 +1,6 @@
 "use client";
 
-import { type TricountPayee, type MeUser } from "@/server/db/types";
+import { type TricountPayeeLight, type MeUser } from "@/server/db/types";
 import { ResponsiveTooltip } from "../../ui/responsive-tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { X } from "lucide-react";
@@ -37,40 +37,66 @@ function Avatars({ user, idTri }: AvatarsProps) {
 
     return (
         <div className="*:data-[slot=avatar]:grayscale *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background flex -space-x-2">
-            {users.map((inTricountUser: { username: string; picture: string | null; type: string | null }) => (
-                <ResponsiveTooltip
+            {users.map((inTricountUser) => (
+                <AvatarWithRemove
                     key={inTricountUser.username}
-                    className="flex items-center gap-2"
-                    content={
-                        <>
-                            {inTricountUser.username}
-                            {inTricountUser.username !== user.username && (
-                                <X className="hover:cursor-pointer size-4" onClick={() => {
-                                    void handleRemoveUserFromTricount(inTricountUser.username);
-                                }} />
-                            )}
-                        </>
-                    }
-                >
-                    <Avatar>
-                        <AvatarImage
-                            src={
-                                inTricountUser.picture
-                                    ? `data:image/${inTricountUser.type};base64,${inTricountUser.picture}`
-                                    : undefined
-                            }
-                            alt={inTricountUser.username}
-                        />
-                        <AvatarFallback>{inTricountUser.username.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                </ResponsiveTooltip>
+                    inTricountUser={inTricountUser}
+                    currentUser={user}
+                    onRemove={handleRemoveUserFromTricount}
+                />
             ))}
         </div>
-    )
+    );
+}
+
+interface AvatarWithRemoveProps {
+    inTricountUser: {
+        username: string;
+    };
+    currentUser: MeUser;
+    onRemove: (username: string) => void;
+}
+
+function AvatarWithRemove({
+    inTricountUser,
+    currentUser,
+    onRemove,
+}: AvatarWithRemoveProps) {
+    const { data: avatarUrl } = api.user.getAvatar.useQuery(
+        { username: inTricountUser.username },
+        { staleTime: Infinity },
+    );
+
+    return (
+        <ResponsiveTooltip
+            className="flex items-center gap-2"
+            content={
+                <>
+                    {inTricountUser.username}
+                    {inTricountUser.username !== currentUser.username && (
+                        <X
+                            className="hover:cursor-pointer size-4"
+                            onClick={() => {
+                                onRemove(inTricountUser.username);
+                            }}
+                        />
+                    )}
+                </>
+            }
+        >
+            <Avatar>
+                <AvatarImage
+                    src={avatarUrl ?? undefined}
+                    alt={inTricountUser.username}
+                />
+                <AvatarFallback>{inTricountUser.username.charAt(0)}</AvatarFallback>
+            </Avatar>
+        </ResponsiveTooltip>
+    );
 }
 
 interface AvatarsWithInteractionProps {
-    payees: TricountPayee[];
+    payees: TricountPayeeLight[];
     currentUser: MeUser;
 }
 

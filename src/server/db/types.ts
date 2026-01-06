@@ -20,9 +20,9 @@ interface TricountInteraction {
     categoryId: number;
     triId: number;
     isRefunded: boolean;
-    userPayer: User;
+    usernamePayer: string;
     date: string;
-    usersPayees: TricountPayee[];
+    usersPayees: TricountPayeeLight[];
 }
 
 interface MeUser {
@@ -38,8 +38,17 @@ interface User {
     type: string | null;
 }
 
+interface UserLight {
+    username: string;
+}
+
 interface TricountPayee extends User {
     amount: number;
 }
 
-export type { Category, Tricount, TricountInteraction, TricountPayee, MeUser, User };
+interface TricountPayeeLight {
+    username: string;
+    amount: number;
+}
+
+export type { Category, Tricount, TricountInteraction, TricountPayeeLight, TricountPayee, MeUser, User, UserLight };

@@ -83,6 +83,20 @@ const userRouter = createTRPCRouter({
             type: userResult[0]!.type,
         };
     }),
+    getAvatar: publicProcedure.input(z.object({
+        username: z.string(),
+    })).query(async ({ ctx, input }): Promise<string | null> => {
+        const userResult = await ctx.db.select({ picture: users.picture, type: users.type }).from(users).where(eq(users.username, input.username)).limit(1);
+
+        if (!userResult || userResult.length === 0 || !userResult[0]!.picture) {
+            return null;
+        }
+
+        const picture = userResult[0]!.picture;
+        const type = userResult[0]!.type ?? "png";
+
+        return `data:image/${type};base64,${uint8ArrayToBase64(picture as Uint8Array)}`;
+    }),
 });
 
 const getUserIfExist = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, token: string) => {

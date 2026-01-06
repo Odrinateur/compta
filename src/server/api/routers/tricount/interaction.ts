@@ -1,12 +1,9 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { tri_categories, tri_interactions, tri_users_payees, users } from "@/server/db/schema";
-import { and, eq, getTableColumns, inArray } from "drizzle-orm";
+import { tri_categories, tri_interactions, tri_users_payees } from "@/server/db/schema";
+import { and, eq, inArray } from "drizzle-orm";
 import { getUserIfExist } from "../user";
 import { hasAccess } from "./tricount";
-import { type TricountPayee } from "@/server/db/types";
-import { uint8ArrayToBase64 } from "@/lib/utils";
-
 
 const tricountInteractionRouter = createTRPCRouter({
     getInteractionsByTricount: publicProcedure.input(z.object({
@@ -17,58 +14,77 @@ const tricountInteractionRouter = createTRPCRouter({
 
         await hasAccess(ctx, user.username, input.idTri);
 
-        const interactionsRaw = await ctx.db
+        // Requête sans JOIN sur users - on ne récupère plus les pictures
+        const rows = await ctx.db
             .select({
-                ...getTableColumns(tri_interactions),
-                category: getTableColumns(tri_categories),
-                payerPicture: users.picture,
-                payerType: users.type,
+                id: tri_interactions.id,
+                name: tri_interactions.name,
+                amount: tri_interactions.amount,
+                categoryId: tri_interactions.categoryId,
+                triId: tri_interactions.triId,
+                isRefunded: tri_interactions.isRefunded,
+                date: tri_interactions.date,
+                usernamePayer: tri_interactions.usernamePayer,
+                categoryName: tri_categories.name,
             })
             .from(tri_interactions)
-            .innerJoin(tri_categories, eq(tri_interactions.categoryId, tri_categories.id))
-            .innerJoin(users, eq(tri_interactions.usernamePayer, users.username))
+            .innerJoin(
+                tri_categories,
+                eq(tri_interactions.categoryId, tri_categories.id),
+            )
             .where(eq(tri_interactions.triId, input.idTri));
 
-        const interactionIds = interactionsRaw.map(i => i.id);
-        const allPayees = interactionIds.length > 0 ? await ctx.db
+        if (rows.length === 0) {
+            return [];
+        }
+
+        // Récupérer les payees sans les pictures
+        const allPayees = await ctx.db
             .select({
                 idInteraction: tri_users_payees.idInteraction,
                 usernamePayee: tri_users_payees.usernamePayee,
                 amount: tri_users_payees.amount,
-                picture: users.picture,
-                type: users.type,
             })
             .from(tri_users_payees)
-            .innerJoin(users, eq(tri_users_payees.usernamePayee, users.username))
             .where(
-                inArray(tri_users_payees.idInteraction, interactionIds)
-            ) : [];
+                inArray(
+                    tri_users_payees.idInteraction,
+                    rows.map((r) => r.id),
+                ),
+            );
 
-        return interactionsRaw.map((interaction) => ({
-            id: interaction.id,
-            name: interaction.name,
-            amount: interaction.amount,
-            categoryId: interaction.categoryId,
-            triId: interaction.triId,
-            isRefunded: interaction.isRefunded,
-            date: interaction.date,
+        // Map pour association O(1)
+        const payeesMap = new Map<
+            number,
+            { username: string; amount: number }[]
+        >();
+        for (const p of allPayees) {
+            const payee = {
+                username: p.usernamePayee,
+                amount: p.amount,
+            };
+            const existing = payeesMap.get(p.idInteraction);
+            if (existing) {
+                existing.push(payee);
+            } else {
+                payeesMap.set(p.idInteraction, [payee]);
+            }
+        }
+
+        return rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            amount: row.amount,
+            categoryId: row.categoryId,
+            triId: row.triId,
+            isRefunded: row.isRefunded,
+            date: row.date,
             category: {
-                id: interaction.category.id,
-                name: interaction.category.name,
+                id: row.categoryId,
+                name: row.categoryName,
             },
-            userPayer: {
-                username: interaction.usernamePayer,
-                picture: interaction.payerPicture ? uint8ArrayToBase64(interaction.payerPicture as Uint8Array) : null,
-                type: interaction.payerType,
-            },
-            usersPayees: allPayees
-                .filter((p) => p.idInteraction === interaction.id)
-                .map((p): TricountPayee => ({
-                    username: p.usernamePayee,
-                    amount: p.amount,
-                    picture: p.picture ? uint8ArrayToBase64(p.picture as Uint8Array) : null,
-                    type: p.type,
-                })),
+            usernamePayer: row.usernamePayer,
+            usersPayees: payeesMap.get(row.id) ?? [],
         }));
     }),
 

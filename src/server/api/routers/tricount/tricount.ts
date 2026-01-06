@@ -4,10 +4,8 @@ import { tri, tri_users, users } from "@/server/db/schema";
 import { and, eq, getTableColumns, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
-import { type TricountInteraction, type User } from "@/server/db/types";
+import { type TricountInteraction, type UserLight } from "@/server/db/types";
 import { createCaller } from "../../root";
-import { uint8ArrayToBase64 } from "@/lib/utils";
-
 
 const tricountRouter = createTRPCRouter({
     getTricountsByUser: publicProcedure.input(z.object({
@@ -77,18 +75,18 @@ const tricountRouter = createTRPCRouter({
             .reduce((acc: number, i: TricountInteraction) => acc + i.amount, 0);
 
         // Construire la map des utilisateurs (payer + payees)
-        const usersMap = new Map<string, User>();
+        const usersMap = new Map<string, UserLight>();
         for (const interaction of activeInteractions) {
-            usersMap.set(interaction.userPayer.username, interaction.userPayer);
+            usersMap.set(interaction.usernamePayer, { username: interaction.usernamePayer });
             for (const payee of interaction.usersPayees) {
-                usersMap.set(payee.username, payee);
+                usersMap.set(payee.username, { username: payee.username });
             }
         }
 
         // Calculer les dettes brutes
         const debts: Record<string, Record<string, number>> = {};
         for (const interaction of activeInteractions) {
-            const payer = interaction.userPayer.username;
+            const payer = interaction.usernamePayer;
             for (const payee of interaction.usersPayees) {
                 if (payee.username !== payer) {
                     debts[payee.username] ??= {};
@@ -98,7 +96,11 @@ const tricountRouter = createTRPCRouter({
         }
 
         // Simplifier les dettes (nettoie les dettes bidirectionnelles)
-        const simplifiedDebts: Array<{ debtor: User; creditor: User; amount: number }> = [];
+        const simplifiedDebts: Array<{
+            debtor: UserLight;
+            creditor: UserLight;
+            amount: number;
+        }> = [];
         const processed = new Set<string>();
 
         for (const debtorUsername in debts) {
@@ -198,18 +200,12 @@ const tricountRouter = createTRPCRouter({
         const usersInTricount = await ctx.db
             .select({
                 username: users.username,
-                picture: users.picture,
-                type: users.type,
             })
             .from(tri_users)
             .innerJoin(users, eq(tri_users.username, users.username))
             .where(eq(tri_users.idTri, input.idTri));
 
-        return usersInTricount.map(u => ({
-            username: u.username,
-            picture: u.picture ? uint8ArrayToBase64(u.picture as Uint8Array) : null,
-            type: u.type,
-        }));
+        return usersInTricount;
     }),
 
     getUsersNotInTricount: publicProcedure.input(z.object({
