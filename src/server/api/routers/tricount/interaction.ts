@@ -1,10 +1,11 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { tri_categories, tri_interactions, tri_users, tri_users_payees, users } from "@/server/db/schema";
+import { tri_categories, tri_interactions, tri_users_payees, users } from "@/server/db/schema";
 import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import { getUserIfExist } from "../user";
 import { hasAccess } from "./tricount";
 import { type TricountPayee } from "@/server/db/types";
+import { uint8ArrayToBase64 } from "@/lib/utils";
 
 
 const tricountInteractionRouter = createTRPCRouter({
@@ -20,6 +21,8 @@ const tricountInteractionRouter = createTRPCRouter({
             .select({
                 ...getTableColumns(tri_interactions),
                 category: getTableColumns(tri_categories),
+                payerPicture: users.picture,
+                payerType: users.type,
             })
             .from(tri_interactions)
             .innerJoin(tri_categories, eq(tri_interactions.categoryId, tri_categories.id))
@@ -32,19 +35,39 @@ const tricountInteractionRouter = createTRPCRouter({
                 idInteraction: tri_users_payees.idInteraction,
                 userIdPayee: tri_users_payees.userIdPayee,
                 amount: tri_users_payees.amount,
+                picture: users.picture,
+                type: users.type,
             })
             .from(tri_users_payees)
+            .innerJoin(users, eq(tri_users_payees.userIdPayee, users.username))
             .where(
                 inArray(tri_users_payees.idInteraction, interactionIds)
             ) : [];
 
         return interactionsRaw.map((interaction) => ({
-            ...interaction,
+            id: interaction.id,
+            name: interaction.name,
+            amount: interaction.amount,
+            categoryId: interaction.categoryId,
+            triId: interaction.triId,
+            isRefunded: interaction.isRefunded,
+            date: interaction.date,
+            category: {
+                id: interaction.category.id,
+                name: interaction.category.name,
+            },
+            userPayer: {
+                username: interaction.userIdPayer,
+                picture: interaction.payerPicture ? uint8ArrayToBase64(interaction.payerPicture as Uint8Array) : null,
+                type: interaction.payerType,
+            },
             payees: allPayees
                 .filter((p) => p.idInteraction === interaction.id)
                 .map((p): TricountPayee => ({
                     username: p.userIdPayee,
                     amount: p.amount,
+                    picture: p.picture ? uint8ArrayToBase64(p.picture as Uint8Array) : null,
+                    type: p.type,
                 })),
         }));
     }),
@@ -130,19 +153,6 @@ const tricountInteractionRouter = createTRPCRouter({
 
         await ctx.db.update(tri_interactions).set({ isRefunded: input.isRefunded }).where(and(eq(tri_interactions.id, input.idInteraction), eq(tri_interactions.triId, input.idTri)));
     }),
-
-    updateInteraction: publicProcedure.input(z.object({
-        token: z.string(),
-        idTri: z.number(),
-        idInteraction: z.number(),
-        name: z.string(),
-        amount: z.number(),
-        categoryId: z.number(),
-        userIdPayer: z.string(),
-        isRefunded: z.boolean(),
-    })).mutation(async ({ ctx, input }) => {
-        return;
-    })
 });
 
 export default tricountInteractionRouter;

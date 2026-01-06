@@ -22,6 +22,8 @@ export const users = createTable(
     "users",
     (d) => ({
         username: d.text("username").notNull().unique().primaryKey(),
+        picture: d.blob("picture"),
+        type: d.text("type"),
         hashedPassword: d.text("hashed_password").notNull(),
         createdAt: d.text("timestamp").notNull().default(sql`(current_timestamp)`),
     }),

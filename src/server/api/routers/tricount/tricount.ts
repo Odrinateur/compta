@@ -4,8 +4,9 @@ import { tri, tri_users, users } from "@/server/db/schema";
 import { and, eq, getTableColumns, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
-import { roleHierarchy, type RoleWithAny, type TricountInteraction } from "@/server/db/types";
+import { roleHierarchy, type RoleWithAny, type TricountInteraction, type User } from "@/server/db/types";
 import { createCaller } from "../../root";
+import { uint8ArrayToBase64 } from "@/lib/utils";
 
 
 const tricountRouter = createTRPCRouter({
@@ -65,74 +66,67 @@ const tricountRouter = createTRPCRouter({
         // Filtrer les interactions non remboursées
         const activeInteractions: TricountInteraction[] = interactions.filter((i: TricountInteraction) => !i.isRefunded);
 
-        // Calculer le total global
-        const totalAmount: number = activeInteractions.reduce((acc: number, interaction: TricountInteraction) => acc + interaction.amount, 0);
-
-        // Calculer le total du mois en cours
+        // Calculs des totaux
+        const totalAmount: number = activeInteractions.reduce((acc: number, i: TricountInteraction) => acc + i.amount, 0);
         const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        const interactionsThisMonth: TricountInteraction[] = activeInteractions.filter((interaction: TricountInteraction) => {
-            const interactionDate = new Date(interaction.date);
-            return interactionDate.getMonth() === currentMonth && interactionDate.getFullYear() === currentYear;
-        });
-        const totalThisMonth: number = interactionsThisMonth.reduce((acc: number, interaction: TricountInteraction) => acc + interaction.amount, 0);
+        const totalThisMonth: number = activeInteractions
+            .filter((i: TricountInteraction) => {
+                const d = new Date(i.date);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            })
+            .reduce((acc: number, i: TricountInteraction) => acc + i.amount, 0);
 
-        // Calculer les dettes entre personnes
-        // Structure: { [debtor]: { [creditor]: amount } }
-        const debts: Record<string, Record<string, number>> = {};
-
+        // Construire la map des utilisateurs (payer + payees)
+        const usersMap = new Map<string, User>();
         for (const interaction of activeInteractions) {
-            const payer = interaction.userIdPayer;
-
+            usersMap.set(interaction.userPayer.username, interaction.userPayer);
             for (const payee of interaction.payees) {
-                const debtor = payee.username;
-                const amount = payee.amount;
+                usersMap.set(payee.username, payee);
+            }
+        }
 
-                if (debtor !== payer) {
-                    debts[debtor] ??= {};
-                    debts[debtor][payer] = (debts[debtor][payer] ?? 0) + amount;
+        // Calculer les dettes brutes
+        const debts: Record<string, Record<string, number>> = {};
+        for (const interaction of activeInteractions) {
+            const payer = interaction.userPayer.username;
+            for (const payee of interaction.payees) {
+                if (payee.username !== payer) {
+                    debts[payee.username] ??= {};
+                    debts[payee.username]![payer] = (debts[payee.username]![payer] ?? 0) + payee.amount;
                 }
             }
         }
 
-        // Simplifier les dettes (si A doit à B et B doit à A, on nettoie)
-        const simplifiedDebts: Array<{ debtor: string; creditor: string; amount: number }> = [];
+        // Simplifier les dettes (nettoie les dettes bidirectionnelles)
+        const simplifiedDebts: Array<{ debtor: User; creditor: User; amount: number }> = [];
         const processed = new Set<string>();
 
-        for (const debtor in debts) {
-            for (const creditor in debts[debtor]) {
-                const key1 = `${debtor}-${creditor}`;
-                const key2 = `${creditor}-${debtor}`;
+        for (const debtorUsername in debts) {
+            for (const creditorUsername in debts[debtorUsername]) {
+                const key = `${debtorUsername}-${creditorUsername}`;
+                if (processed.has(key)) continue;
 
-                if (processed.has(key1) || processed.has(key2)) {
-                    continue;
+                const amount1 = debts[debtorUsername]?.[creditorUsername] ?? 0;
+                const amount2 = debts[creditorUsername]?.[debtorUsername] ?? 0;
+                const netAmount = amount1 - amount2;
+
+                const debtor = usersMap.get(debtorUsername);
+                const creditor = usersMap.get(creditorUsername);
+                if (!debtor || !creditor) continue;
+
+                if (netAmount > 0) {
+                    simplifiedDebts.push({ debtor, creditor, amount: netAmount });
+                } else if (netAmount < 0) {
+                    simplifiedDebts.push({ debtor: creditor, creditor: debtor, amount: -netAmount });
                 }
 
-                const amount1 = debts[debtor]?.[creditor] ?? 0;
-                const amount2 = debts[creditor]?.[debtor] ?? 0;
-
-                if (amount1 > amount2) {
-                    simplifiedDebts.push({
-                        debtor,
-                        creditor,
-                        amount: amount1 - amount2,
-                    });
-                } else if (amount2 > amount1) {
-                    simplifiedDebts.push({
-                        debtor: creditor,
-                        creditor: debtor,
-                        amount: amount2 - amount1,
-                    });
-                }
-
-                processed.add(key1);
-                processed.add(key2);
+                processed.add(key);
+                processed.add(`${creditorUsername}-${debtorUsername}`);
             }
         }
 
         return {
-            ...triData[0]!,
+            ...triData[0],
             totalAmount,
             totalThisMonth,
             debts: simplifiedDebts,
@@ -205,12 +199,18 @@ const tricountRouter = createTRPCRouter({
         const usersInTricount = await ctx.db
             .select({
                 username: users.username,
+                picture: users.picture,
+                type: users.type,
             })
             .from(tri_users)
             .innerJoin(users, eq(tri_users.userId, users.username))
             .where(eq(tri_users.idTri, input.idTri));
 
-        return usersInTricount.map(u => u.username);
+        return usersInTricount.map(u => ({
+            username: u.username,
+            picture: u.picture ? uint8ArrayToBase64(u.picture as Uint8Array) : null,
+            type: u.type,
+        }));
     }),
 
     getUsersNotInTricount: publicProcedure.input(z.object({

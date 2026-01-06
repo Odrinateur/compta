@@ -12,10 +12,10 @@ import { Card, CardContent, CardFooter } from "../../ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Skeleton } from "../../ui/skeleton";
 import MultipleSelector, { type Option } from "../../ui/multi-select";
-import { type User } from "@/server/db/types";
+import { type MeUser } from "@/server/db/types";
 
 interface TricountInteractionCreationInputProps {
-    user: User;
+    user: MeUser;
     idTri: number;
 }
 
@@ -35,13 +35,13 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
 
     useEffect(() => {
         if (usersInTricount.data && usersInTricount.data.length > 0 && !defaultsSetRef.current) {
-            if (user.username && usersInTricount.data.includes(user.username)) {
+            if (user.username && usersInTricount.data.some(u => u.username === user.username)) {
                 setUserIdPayer(user.username);
             }
 
-            const allUsersOptions: Option[] = usersInTricount.data.map((user) => ({
-                label: user,
-                value: user
+            const allUsersOptions: Option[] = usersInTricount.data.map((u) => ({
+                label: u.username,
+                value: u.username
             }));
             setUsersPayees(allUsersOptions);
 
@@ -186,8 +186,8 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                         <SelectValue placeholder="Sélectionnez un utilisateur" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {usersInTricount.data?.map((user) => (
-                                            <SelectItem key={user} value={user}>{user}</SelectItem>
+                                        {usersInTricount.data?.map((u) => (
+                                            <SelectItem key={u.username} value={u.username}>{u.username}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -200,9 +200,9 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                 <MultipleSelector
                                     value={usersPayees}
                                     onChange={setUsersPayees}
-                                    options={usersInTricount.data?.map((user) => ({
-                                        label: user,
-                                        value: user
+                                    options={usersInTricount.data?.map((u) => ({
+                                        label: u.username,
+                                        value: u.username
                                     })) ?? []}
                                     placeholder="Sélectionnez un utilisateur"
                                     className="h-10"

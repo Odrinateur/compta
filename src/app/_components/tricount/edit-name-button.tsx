@@ -1,6 +1,6 @@
 "use client";
 
-import { type User } from "@/server/db/types";
+import { type MeUser } from "@/server/db/types";
 import { api } from "@/trpc/react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../_components/ui/dialog";
@@ -10,7 +10,7 @@ import { Label } from "../../_components/ui/label";
 import { Input } from "../../_components/ui/input";
 
 interface EditNameButtonProps {
-    user: User;
+    user: MeUser;
     idTri: number;
     currentName: string;
 }

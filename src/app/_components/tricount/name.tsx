@@ -1,11 +1,11 @@
 "use client";
 
-import { type User } from "@/server/db/types";
+import { type MeUser } from "@/server/db/types";
 import { api } from "@/trpc/react";
 import { H3 } from "../ui/typography";
 
 interface TricountNameProps {
-    user: User;
+    user: MeUser;
     idTri: number;
     initialName: string;
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `compta_users` ADD `picture` blob;

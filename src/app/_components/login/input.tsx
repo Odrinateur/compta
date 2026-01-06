@@ -8,6 +8,7 @@ import { loginAction } from "./login-action";
 export default function LoginInput() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [picture, setPicture] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +18,7 @@ export default function LoginInput() {
         setError(null);
 
         try {
-            await loginAction(username, password);
+            await loginAction(username, password, picture);
         } catch (err) {
             const error = err as Error & { digest?: string };
             if (error instanceof Error && error.digest?.startsWith("NEXT_REDIRECT")) {
@@ -50,6 +51,14 @@ export default function LoginInput() {
                 disabled={isLoading}
                 required
             />
+            <Input
+                type="file"
+                accept="image/*"
+                className="w-64"
+                onChange={(e) => setPicture(e.target.files?.[0] ?? null)}
+                disabled={isLoading}
+            />
+
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <Button type="submit" disabled={isLoading}>
                 {isLoading ? "Connexion..." : "Login"}

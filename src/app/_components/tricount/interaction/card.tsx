@@ -1,6 +1,6 @@
 "use client";
 
-import { type User, type TricountInteraction } from "@/server/db/types";
+import { type MeUser, type TricountInteraction } from "@/server/db/types";
 import { Card } from "../../ui/card";
 import { Skeleton } from "../../ui/skeleton";
 import { Sparkles, Search, ArrowUpDown, X } from "lucide-react";
@@ -17,7 +17,7 @@ import { AvatarsWithInteraction } from "../users/avatars";
 
 interface TricountInteractionCardProps {
     interaction: TricountInteraction;
-    user: User;
+    user: MeUser;
 }
 
 function TricountInteractionCard({ interaction, user }: TricountInteractionCardProps) {
@@ -42,7 +42,7 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
             </div>
 
             <div className="flex sm:flex-row flex-col flex-1 sm:items-center gap-1.5 sm:gap-4 min-w-0">
-                <OneAvatar username={interaction.userIdPayer} currentUser={user} />
+                <OneAvatar user={interaction.userPayer} currentUser={user} />
                 <p className="text-muted-foreground text-xs">
                     {formatDate(interaction.date)}
                     <span className="mx-1.5">·</span>
@@ -100,7 +100,7 @@ function TricountInteractionCardSkeleton() {
 }
 
 interface TrictountInteractionGridCardProps {
-    user: User;
+    user: MeUser;
     idTri: number;
 }
 
@@ -127,7 +127,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
         }
 
         if (filterPayer !== "all") {
-            filtered = filtered.filter(interaction => interaction.userIdPayer === filterPayer);
+            filtered = filtered.filter(interaction => interaction.userPayer.username === filterPayer);
         }
 
         if (filterCategory !== "all") {
@@ -147,7 +147,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                 case "date-asc":
                     return new Date(a.date).getTime() - new Date(b.date).getTime();
                 case "payer":
-                    return a.userIdPayer.localeCompare(b.userIdPayer);
+                    return a.userPayer.username.localeCompare(b.userPayer.username);
                 case "category":
                     return a.category.name.localeCompare(b.category.name);
                 default:
@@ -238,8 +238,8 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                     <SelectContent>
                         <SelectItem value="all">Tous (utilisateurs)</SelectItem>
                         {users?.map((user) => (
-                            <SelectItem key={user} value={user}>
-                                {user}
+                            <SelectItem key={user.username} value={user.username}>
+                                {user.username}
                             </SelectItem>
                         ))}
                     </SelectContent>

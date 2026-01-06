@@ -1,16 +1,16 @@
 "use client";
 
-import { type User } from "@/server/db/types";
+import { type TricountPayee, type MeUser, type User } from "@/server/db/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { ResponsiveTooltip } from "../../ui/responsive-tooltip";
+import { formatAmount } from "@/lib/utils";
 
 interface OneAvatarProps {
-    username: string;
-    currentUser: User;
-    description?: string;
+    user: User | TricountPayee;
+    currentUser: MeUser;
 }
 
-export default function OneAvatar({ username, currentUser, description }: OneAvatarProps) {
+export default function OneAvatar({ user, currentUser }: OneAvatarProps) {
     return (
         <ResponsiveTooltip
             side="top"
@@ -18,15 +18,15 @@ export default function OneAvatar({ username, currentUser, description }: OneAva
             content={
                 <>
                     <p>
-                        {username} {username === currentUser.username && <span className="font-normal text-muted-foreground"> (moi)</span>}
+                        {user.username} {user.username === currentUser.username && <span className="font-normal text-muted-foreground"> (moi)</span>}
                     </p>
-                    {description && <p>{description}</p>}
+                    {("amount" in user) && <p>{formatAmount(user.amount)}</p>}
                 </>
             }
         >
             <Avatar>
-                <AvatarImage src="#" alt={username} />
-                <AvatarFallback>{username.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.picture ? `data:image/${user.type};base64,${user.picture}` : undefined} alt={user.username} />
+                <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
             </Avatar>
         </ResponsiveTooltip>
     );

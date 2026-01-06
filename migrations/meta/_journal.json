@@ -64,6 +64,20 @@
       "when": 1767622831256,
       "tag": "0008_skinny_frank_castle",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1767707168040,
+      "tag": "0009_material_mindworm",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1767710056575,
+      "tag": "0010_messy_power_man",
+      "breakpoints": true
     }
   ]
 }

@@ -59,14 +59,14 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
             </div>
 
             <div className="flex flex-wrap justify-center items-center gap-4 w-full">
-                {stats.debts.map((debt: { debtor: string; creditor: string; amount: number }, index: number) => (
+                {stats.debts.map((debt, index: number) => (
                     <div key={index} className="border border-muted rounded-lg flex justify-center items-center gap-2 p-3">
-                        <OneAvatar username={debt.debtor} currentUser={user} />
+                        <OneAvatar user={debt.debtor} currentUser={user} />
                         <p className="font-medium">
                             {formatAmount(debt.amount)}
                         </p>
                         <ArrowRightIcon className="size-4" />
-                        <OneAvatar username={debt.creditor} currentUser={user} />
+                        <OneAvatar user={debt.creditor} currentUser={user} />
                     </div>
                 ))}
             </div>

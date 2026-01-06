@@ -1,6 +1,6 @@
 "use client";
 
-import { type User } from "@/server/db/types";
+import { type MeUser } from "@/server/db/types";
 import { api } from "@/trpc/react";
 import { useState } from "react";
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../../ui/dialog";
@@ -10,7 +10,7 @@ import { Label } from "../../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 
 interface AddUserButtonProps {
-    user: User;
+    user: MeUser;
     idTri: number;
 }
 

@@ -3,13 +3,13 @@
 import { Card, CardTitle } from "../ui/card";
 import Link from "next/link";
 import { Skeleton } from "../ui/skeleton";
-import { type Tricount, type User } from "@/server/db/types";
+import { type Tricount, type MeUser } from "@/server/db/types";
 import EditNameButton from "./edit-name-button";
 import { api } from "@/trpc/react";
 
 interface TricountCardProps {
     tricount: Tricount;
-    user: User | null;
+    user: MeUser | null;
 }
 
 function TricountCard({ tricount, user }: TricountCardProps) {
@@ -52,7 +52,7 @@ function TricountCardSkeleton() {
 }
 
 
-function TricountCardGrid({ user }: { user: User }) {
+function TricountCardGrid({ user }: { user: MeUser }) {
     const { data: tricounts } = api.tricount.getTricountsByUser.useQuery({ token: user.token });
 
     if (!tricounts) {

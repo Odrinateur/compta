@@ -9,11 +9,6 @@ interface Tricount {
     name: string;
 }
 
-interface TricountPayee {
-    username: string;
-    amount: number;
-}
-
 interface TricountInteraction {
     category: {
         id: number;
@@ -25,14 +20,26 @@ interface TricountInteraction {
     categoryId: number;
     triId: number;
     isRefunded: boolean;
-    userIdPayer: string;
+    userPayer: User;
     date: string;
     payees: TricountPayee[];
 }
 
-interface User {
+interface MeUser {
     token: string;
     username: string;
+    picture: string | null;
+    type: string | null;
+}
+
+interface User {
+    username: string;
+    picture: string | null;
+    type: string | null;
+}
+
+interface TricountPayee extends User {
+    amount: number;
 }
 
 type Role = "owner" | "writer" | "reader";
@@ -44,5 +51,5 @@ const roleHierarchy: Record<Role, number> = {
     reader: 1,
 };
 
-export type { Category, Tricount, TricountInteraction, TricountPayee, User, Role, RoleWithAny, RoleWithoutOwner };
+export type { Category, Tricount, TricountInteraction, TricountPayee, MeUser, User, Role, RoleWithAny, RoleWithoutOwner };
 export { roleHierarchy };

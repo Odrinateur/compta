@@ -1,4 +1,4 @@
-import { NextConfig } from "next";
+import { type NextConfig } from "next";
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
@@ -12,7 +12,12 @@ import "src/env";
 
 /** @type {import("next").NextConfig} */
 const config: NextConfig = {
-  output: "standalone",
+    output: "standalone",
+    experimental: {
+        serverActions: {
+            bodySizeLimit: "10mb",
+        },
+    },
 };
 
 export default config;
