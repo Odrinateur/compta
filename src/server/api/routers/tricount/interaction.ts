@@ -134,7 +134,7 @@ const tricountInteractionRouter = createTRPCRouter({
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user.username, input.idTri, "reader");
+        await hasAccess(ctx, user.username, input.idTri);
 
         await ctx.db.delete(tri_users_payees).where(eq(tri_users_payees.idInteraction, input.idInteraction));
 
@@ -149,7 +149,7 @@ const tricountInteractionRouter = createTRPCRouter({
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user.username, input.idTri, "writer");
+        await hasAccess(ctx, user.username, input.idTri);
 
         await ctx.db.update(tri_interactions).set({ isRefunded: input.isRefunded }).where(and(eq(tri_interactions.id, input.idInteraction), eq(tri_interactions.triId, input.idTri)));
     }),
