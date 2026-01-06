@@ -11,36 +11,37 @@ import { Input } from "../../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Button } from "../../ui/button";
 import { useState, useMemo } from "react";
-
-function formatAmount(amount: number): string {
-    return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR',
-    }).format(amount / 100);
-}
-
-function formatDate(dateStr: string): string {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-    }).format(date);
-}
+import { Checkbox } from "../../ui/checkbox";
+import { H3 } from "../../ui/typography";
+import { formatAmount, formatDate } from "@/lib/utils";
 
 interface TricountInteractionCardProps {
     interaction: TricountInteraction;
-    currentUsername?: string;
+    user: User;
 }
 
-function TricountInteractionCard({ interaction, currentUsername }: TricountInteractionCardProps) {
-    const isPayer = currentUsername === interaction.userIdPayer;
+function TricountInteractionCard({ interaction, user }: TricountInteractionCardProps) {
+    const isPayer = user.username === interaction.userIdPayer;
+
+    const utils = api.useUtils();
+    const setInteractionRefundedMutation = api.tricountInteraction.setInteractionRefunded.useMutation({
+        onSuccess: () => {
+            void utils.tricountInteraction.getInteractionsByTricount.invalidate({ token: user.token, idTri: interaction.triId });
+        }
+    });
 
     return (
         <Card className="flex sm:flex-row flex-col items-start sm:items-center gap-3 px-4 py-3">
-            <h3 className="sm:min-w-[140px] sm:max-w-[200px] font-semibold text-base truncate shrink-0">
+            <Checkbox
+                checked={interaction.isRefunded}
+                onCheckedChange={(checked) => void setInteractionRefundedMutation.mutate({ token: user.token, idTri: interaction.triId, idInteraction: interaction.id, isRefunded: checked as boolean })}
+                className="size-4"
+            />
+            <H3
+                className="sm:min-w-[140px] sm:max-w-[200px] font-semibold text-base truncate shrink-0"
+                style={interaction.isRefunded ? { opacity: 0.6, pointerEvents: "none" } : undefined}>
                 {interaction.name}
-            </h3>
+            </H3>
 
             <div className="flex sm:flex-row flex-col flex-1 sm:items-center gap-1.5 sm:gap-4 min-w-0">
                 <Tooltip>
@@ -69,7 +70,7 @@ function TricountInteractionCard({ interaction, currentUsername }: TricountInter
                     <div className="sm:block flex flex-col gap-2">
                         <div className="flex items-center -space-x-2 shrink-0">
                             {interaction.payees.slice(0, 5).map((payee) => {
-                                const isCurrentUser = currentUsername === payee.username;
+                                const isCurrentUser = user.username === payee.username;
 
                                 return (
                                     <Tooltip key={payee.username}>
@@ -112,17 +113,12 @@ function TricountInteractionCard({ interaction, currentUsername }: TricountInter
                     <span className="font-bold tabular-nums text-lg">
                         {formatAmount(interaction.amount)}
                     </span>
-                    {interaction.isRefunded && (
-                        <span className="font-medium text-green-600 text-xs">
-                            Remboursé
-                        </span>
-                    )}
                 </div>
             </div>
 
             <div className="md:hidden flex flex-col gap-1 w-full">
                 {interaction.payees.map((payee) => {
-                    const isCurrentUser = currentUsername === payee.username;
+                    const isCurrentUser = user.username === payee.username;
                     return (
                         <div key={payee.username} className="flex items-center gap-1.5">
                             <span className="text-muted-foreground text-xs">
@@ -339,8 +335,8 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                             <div className="flex flex-col gap-2">
                                 {groupedByDate[dateKey]?.map((interaction) => (
                                     <TricountInteractionCard
+                                        user={user}
                                         interaction={interaction}
-                                        currentUsername={user.username}
                                         key={interaction.id}
                                     />
                                 ))}

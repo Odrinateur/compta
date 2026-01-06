@@ -116,6 +116,19 @@ const tricountInteractionRouter = createTRPCRouter({
         await ctx.db.delete(tri_interactions).where(and(eq(tri_interactions.id, input.idInteraction), eq(tri_interactions.triId, input.idTri)));
     }),
 
+    setInteractionRefunded: publicProcedure.input(z.object({
+        token: z.string(),
+        idTri: z.number(),
+        idInteraction: z.number(),
+        isRefunded: z.boolean(),
+    })).mutation(async ({ ctx, input }) => {
+        const user = await getUserIfExist(ctx, input.token);
+
+        await hasAccess(ctx, user.username, input.idTri, "writer");
+
+        await ctx.db.update(tri_interactions).set({ isRefunded: input.isRefunded }).where(and(eq(tri_interactions.id, input.idInteraction), eq(tri_interactions.triId, input.idTri)));
+    }),
+
     updateInteraction: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
