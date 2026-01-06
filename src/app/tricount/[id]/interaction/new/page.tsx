@@ -12,7 +12,7 @@ export default async function NewInteractionPage({ params }: { params: Promise<{
 
     return (
         <>
-            <TricountInteractionCreationInputs token={user.token} idTri={Number(id)} />
+            <TricountInteractionCreationInputs user={user} idTri={Number(id)} />
         </>
     );
 }

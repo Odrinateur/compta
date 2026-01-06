@@ -57,6 +57,13 @@
       "when": 1767619091176,
       "tag": "0007_medical_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1767622831256,
+      "tag": "0008_skinny_frank_castle",
+      "breakpoints": true
     }
   ]
 }

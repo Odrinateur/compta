@@ -6,6 +6,7 @@ import { api } from "@/trpc/server";
 import { redirect } from "next/navigation";
 import { Button } from "@/app/_components/ui/button";
 import { PlusIcon } from "lucide-react";
+import { TrictountInteractionGridCard } from "@/app/_components/tricount/interaction/card";
 
 export default async function TricountPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -39,6 +40,7 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
                     <Avatars user={user} idTri={Number(id)} />
                 </div>
             </div>
+            <TrictountInteractionGridCard user={user} idTri={Number(id)} />
         </>
     );
 }

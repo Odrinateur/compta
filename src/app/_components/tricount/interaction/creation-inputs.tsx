@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { Input } from "../../ui/input";
@@ -11,13 +11,15 @@ import { Label } from "../../ui/label";
 import { Card, CardContent, CardFooter } from "../../ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Skeleton } from "../../ui/skeleton";
+import MultipleSelector, { type Option } from "../../ui/multi-select";
+import { type User } from "@/server/db/types";
 
 interface TricountInteractionCreationInputProps {
-    token: string;
+    user: User;
     idTri: number;
 }
 
-function TricountInteractionCreationInputs({ token, idTri }: TricountInteractionCreationInputProps) {
+function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionCreationInputProps) {
     const router = useRouter();
     const [name, setName] = useState("");
     const [amount, setAmount] = useState<number>(0);
@@ -25,14 +27,32 @@ function TricountInteractionCreationInputs({ token, idTri }: TricountInteraction
     const [isRefunded] = useState<boolean>(false);
     const [userIdPayer, setUserIdPayer] = useState<string>("");
     const [date, setDate] = useState<Date>(new Date());
+    const [usersPayees, setUsersPayees] = useState<Option[]>([]);
+    const defaultsSetRef = useRef(false);
 
-    const categories = api.tricountInteraction.getCategoriesByTricount.useQuery({ token, idTri });
-    const usersInTricount = api.tricount.getUsersInTricount.useQuery({ token, idTri });
+    const categories = api.tricountInteraction.getCategoriesByTricount.useQuery({ token: user.token, idTri });
+    const usersInTricount = api.tricount.getUsersInTricount.useQuery({ token: user.token, idTri });
+
+    useEffect(() => {
+        if (usersInTricount.data && usersInTricount.data.length > 0 && !defaultsSetRef.current) {
+            if (user.username && usersInTricount.data.includes(user.username)) {
+                setUserIdPayer(user.username);
+            }
+
+            const allUsersOptions: Option[] = usersInTricount.data.map((user) => ({
+                label: user,
+                value: user
+            }));
+            setUsersPayees(allUsersOptions);
+
+            defaultsSetRef.current = true;
+        }
+    }, [usersInTricount.data, user.username]);
 
     const utils = api.useUtils();
     const addInteractionMutation = api.tricountInteraction.createInteraction.useMutation({
         onSuccess: async () => {
-            await utils.tricountInteraction.getInteractionsByTricount.invalidate({ token, idTri });
+            await utils.tricountInteraction.getInteractionsByTricount.invalidate({ token: user.token, idTri });
             router.push(`/tricount/${idTri}`);
         }
     });
@@ -54,13 +74,16 @@ function TricountInteractionCreationInputs({ token, idTri }: TricountInteraction
         }
 
         await addInteractionMutation.mutateAsync({
-            token,
+            token: user.token,
             idTri,
             name,
             categoryId,
             amount: amountNumber,
             userIdPayer,
             isRefunded,
+            usersPayees: usersPayees.map((user) => ({
+                userId: user.value,
+            })),
         });
     };
 
@@ -140,7 +163,7 @@ function TricountInteractionCreationInputs({ token, idTri }: TricountInteraction
                                     value={categoryId ? categoryId.toString() : ""}
                                     onValueChange={(value) => setCategoryId(Number(value))}
                                 >
-                                    <SelectTrigger id="category" className="h-10">
+                                    <SelectTrigger id="category" className="w-full h-10">
                                         <SelectValue placeholder="Sélectionnez une catégorie" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -158,7 +181,7 @@ function TricountInteractionCreationInputs({ token, idTri }: TricountInteraction
                                     Utilisateur qui a payé
                                 </Label>
                                 <Select value={userIdPayer} onValueChange={setUserIdPayer}>
-                                    <SelectTrigger id="payer" className="h-10">
+                                    <SelectTrigger id="payer" className="w-full h-10">
                                         <SelectValue placeholder="Sélectionnez un utilisateur" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -167,6 +190,22 @@ function TricountInteractionCreationInputs({ token, idTri }: TricountInteraction
                                         ))}
                                     </SelectContent>
                                 </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="payer" className="font-medium text-sm">
+                                    Utilisateur(s) bénéficiaire(s)
+                                </Label>
+                                <MultipleSelector
+                                    value={usersPayees}
+                                    onChange={setUsersPayees}
+                                    options={usersInTricount.data?.map((user) => ({
+                                        label: user,
+                                        value: user
+                                    })) ?? []}
+                                    placeholder="Sélectionnez un utilisateur"
+                                    className="h-10"
+                                />
                             </div>
                         </CardContent>
                         <CardFooter className="border-t flex justify-end gap-3">

@@ -1,6 +1,6 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure, type createTRPCContext } from "@/server/api/trpc";
-import { tri, tri_categories, tri_interactions, tri_users, users } from "@/server/db/schema";
+import { tri, tri_users, users } from "@/server/db/schema";
 import { and, eq, getTableColumns, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
@@ -42,19 +42,7 @@ const tricountRouter = createTRPCRouter({
             throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
         }
 
-        const interactions = await ctx.db
-            .select({
-                ...getTableColumns(tri_interactions),
-                category: getTableColumns(tri_categories),
-            })
-            .from(tri_interactions)
-            .innerJoin(tri_categories, eq(tri_interactions.categoryId, tri_categories.id))
-            .where(eq(tri_interactions.triId, input.idTri));
-
-        return {
-            ...triData[0],
-            interactions,
-        };
+        return triData[0];
     }),
 
     createTricount: publicProcedure.input(z.object({
