@@ -3,8 +3,6 @@
 import { type User, type TricountInteraction } from "@/server/db/types";
 import { Card } from "../../ui/card";
 import { Skeleton } from "../../ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { Sparkles, Search, ArrowUpDown, X } from "lucide-react";
 import { api } from "@/trpc/react";
 import { Input } from "../../ui/input";
@@ -14,6 +12,8 @@ import { useState, useMemo } from "react";
 import { Checkbox } from "../../ui/checkbox";
 import { H3 } from "../../ui/typography";
 import { formatAmount, formatDate } from "@/lib/utils";
+import OneAvatar from "../users/one-avatar";
+import { AvatarsWithInteraction } from "../users/avatars";
 
 interface TricountInteractionCardProps {
     interaction: TricountInteraction;
@@ -21,8 +21,6 @@ interface TricountInteractionCardProps {
 }
 
 function TricountInteractionCard({ interaction, user }: TricountInteractionCardProps) {
-    const isPayer = user.username === interaction.userIdPayer;
-
     const utils = api.useUtils();
     const setInteractionRefundedMutation = api.tricountInteraction.setInteractionRefunded.useMutation({
         onSuccess: () => {
@@ -44,20 +42,7 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
             </div>
 
             <div className="flex sm:flex-row flex-col flex-1 sm:items-center gap-1.5 sm:gap-4 min-w-0">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Avatar>
-                            <AvatarImage src="#" alt={interaction.userIdPayer} />
-                            <AvatarFallback>{interaction.userIdPayer.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-sm">
-                        <p>
-                            {interaction.userIdPayer} {isPayer && <span className="font-normal text-muted-foreground"> (moi)</span>}
-                        </p>
-                    </TooltipContent>
-                </Tooltip>
-
+                <OneAvatar username={interaction.userIdPayer} currentUser={user} />
                 <p className="text-muted-foreground text-xs">
                     {formatDate(interaction.date)}
                     <span className="mx-1.5">·</span>
@@ -66,48 +51,7 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
             </div>
 
             <div className="flex justify-between sm:justify-end items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                {interaction.payees.length > 0 && (
-                    <div className="sm:block flex flex-col gap-2">
-                        <div className="flex items-center -space-x-2 shrink-0">
-                            {interaction.payees.slice(0, 5).map((payee) => {
-                                const isCurrentUser = user.username === payee.username;
-
-                                return (
-                                    <Tooltip key={payee.username}>
-                                        <TooltipTrigger asChild>
-                                            <Avatar>
-                                                <AvatarImage src="#" alt={payee.username} />
-                                                <AvatarFallback>{payee.username.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-sm">
-                                            <p className="font-semibold">
-                                                {payee.username}
-                                                {isCurrentUser && <span className="font-normal text-muted-foreground"> (moi)</span>}
-                                            </p>
-                                            <p className="">
-                                                {formatAmount(payee.amount)}
-                                            </p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                );
-                            })}
-                            {interaction.payees.length > 5 && (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Avatar>
-                                            <AvatarImage src="#" alt={`${interaction.payees.length - 5} autres`} />
-                                            <AvatarFallback>+{interaction.payees.length - 5}</AvatarFallback>
-                                        </Avatar>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="text-sm">
-                                        {interaction.payees.slice(5).map(p => p.username).join(', ')}
-                                    </TooltipContent>
-                                </Tooltip>
-                            )}
-                        </div>
-                    </div>
-                )}
+                <AvatarsWithInteraction payees={interaction.payees} currentUser={user} />
 
                 <div className="flex flex-col items-end shrink-0">
                     <span className="font-bold tabular-nums text-lg">
@@ -253,7 +197,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
     const hasActiveFilters = searchQuery.trim() !== "" || filterPayer !== "all" || filterCategory !== "all" || filterRefunded !== "all";
 
     return (
-        <div className="flex flex-col gap-4 mt-4 w-full">
+        <div className="flex flex-col gap-4 w-full">
             <div className="flex flex-wrap gap-2 w-full">
                 <div className="relative flex-1 min-w-[200px]">
                     <Search className="top-1/2 left-3 absolute pointer-events-none size-4 -translate-y-1/2 text-muted-foreground" />
@@ -380,7 +324,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
 function TrictountInteractionGridCardSkeleton() {
     return (
         <>
-            <div className="flex flex-wrap gap-2 mt-4 w-full">
+            <div className="flex flex-wrap gap-2 w-full">
                 <Skeleton className="w-full h-9" />
             </div>
             <div className="flex flex-col gap-6 mx-auto w-full max-w-[700px]">
