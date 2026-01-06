@@ -169,6 +169,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
     const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "payer" | "category">("date-desc");
     const [filterPayer, setFilterPayer] = useState<string>("all");
     const [filterCategory, setFilterCategory] = useState<string>("all");
+    const [filterRefunded, setFilterRefunded] = useState<string>("all");
 
     const filteredAndSortedInteractions = useMemo(() => {
         if (!interactions) return [];
@@ -189,6 +190,12 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
             filtered = filtered.filter(interaction => interaction.categoryId === Number(filterCategory));
         }
 
+        if (filterRefunded !== "all") {
+            filtered = filtered.filter(interaction =>
+                filterRefunded === "refunded" ? interaction.isRefunded : !interaction.isRefunded
+            );
+        }
+
         filtered.sort((a, b) => {
             switch (sortBy) {
                 case "date-desc":
@@ -205,7 +212,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
         });
 
         return filtered;
-    }, [interactions, searchQuery, sortBy, filterPayer, filterCategory]);
+    }, [interactions, searchQuery, sortBy, filterPayer, filterCategory, filterRefunded]);
 
     const groupedByDate = useMemo(() => {
         return filteredAndSortedInteractions.reduce((acc, interaction) => {
@@ -243,7 +250,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
         return <TrictountInteractionGridCardSkeleton />;
     }
 
-    const hasActiveFilters = searchQuery.trim() !== "" || filterPayer !== "all" || filterCategory !== "all";
+    const hasActiveFilters = searchQuery.trim() !== "" || filterPayer !== "all" || filterCategory !== "all" || filterRefunded !== "all";
 
     return (
         <div className="flex flex-col gap-4 mt-4 w-full">
@@ -281,11 +288,11 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                 </Select>
 
                 <Select value={filterPayer} onValueChange={setFilterPayer}>
-                    <SelectTrigger className="w-full sm:w-[140px] h-9">
+                    <SelectTrigger className="w-full sm:w-[180px] h-9">
                         <SelectValue placeholder="Payé par" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">Tous</SelectItem>
+                        <SelectItem value="all">Tous (utilisateurs)</SelectItem>
                         {users?.map((user) => (
                             <SelectItem key={user} value={user}>
                                 {user}
@@ -295,16 +302,27 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                 </Select>
 
                 <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger className="w-full sm:w-[140px] h-9">
+                    <SelectTrigger className="w-full sm:w-[180px] h-9">
                         <SelectValue placeholder="Catégorie" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">Toutes</SelectItem>
+                        <SelectItem value="all">Toutes (catégories)</SelectItem>
                         {categories?.map((category) => (
                             <SelectItem key={category.id} value={String(category.id)}>
                                 {category.name}
                             </SelectItem>
                         ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={filterRefunded} onValueChange={setFilterRefunded}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-9">
+                        <SelectValue placeholder="Remboursement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Tous (remboursements)</SelectItem>
+                        <SelectItem value="refunded">Remboursés</SelectItem>
+                        <SelectItem value="not-refunded">Non remboursés</SelectItem>
                     </SelectContent>
                 </Select>
 
@@ -316,6 +334,7 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                         setSearchQuery("");
                         setFilterPayer("all");
                         setFilterCategory("all");
+                        setFilterRefunded("all");
                     }}
                     disabled={!hasActiveFilters}
                 >
