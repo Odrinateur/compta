@@ -13,6 +13,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { Skeleton } from "../../ui/skeleton";
 import MultipleSelector, { type Option } from "../../ui/multi-select";
 import { type MeUser } from "@/server/db/types";
+import Link from "next/link";
 
 interface TricountInteractionCreationInputProps {
     user: MeUser;
@@ -89,18 +90,14 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
     };
 
     return (
-        <div className="bg-linear-to-br from-background via-background to-muted/20 fixed inset-0 flex flex-col justify-center items-center p-6 overflow-y-auto">
-            <div className="w-full max-w-lg">
-                <div className="mb-6">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/tricount/${idTri}`)}
-                        className="mb-4 -ml-2"
-                    >
-                        <ArrowLeft className="mr-2 w-4 h-4" />
-                        Retour
-                    </Button>
+        <div className="flex flex-col justify-center items-center w-full overflow-y-auto">
+            <div className="flex flex-col justify-center items-center gap-4 w-full">
+                <div className="flex justify-start items-center gap-2">
+                    <Link href={`/tricount/${idTri}`}>
+                        <Button size="icon">
+                            <ArrowLeft />
+                        </Button>
+                    </Link>
                     <h1 className="font-semibold text-2xl tracking-tight">Nouvelle interaction</h1>
                 </div>
 
@@ -144,6 +141,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                     <Input
                                         id="amount"
                                         type="number"
+                                        inputMode="decimal"
                                         placeholder="0.00"
                                         step="0.01"
                                         min="0"
@@ -176,8 +174,8 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                 </Select>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="payer" className="font-medium text-sm">
+                            <div className="space-y-2 pt-2 sm:pt-0">
+                                <Label htmlFor="payer" className="hidden sm:block font-medium text-sm">
                                     Utilisateur qui a payé
                                 </Label>
                                 <Select value={usernamePayer} onValueChange={setUsernamePayer}>
@@ -193,7 +191,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="payer" className="font-medium text-sm">
+                                <Label htmlFor="payer" className="hidden sm:block font-medium text-sm">
                                     Utilisateur(s) bénéficiaire(s)
                                 </Label>
                                 <MultipleSelector
