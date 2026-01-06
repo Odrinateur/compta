@@ -66,6 +66,7 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                     <Select
                         value={username}
                         onValueChange={(value) => setUsername(value)}
+                        disabled={usersNotInTricount && usersNotInTricount.length === 0}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Sélectionnez un utilisateur" />
@@ -86,7 +87,7 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                         type="submit"
                         size={addUserMutation.isPending ? "icon" : "default"}
                         onClick={handleAddUser}
-                        disabled={addUserMutation.isPending}
+                        disabled={addUserMutation.isPending || usersNotInTricount && usersNotInTricount.length === 0}
                     >
                         {addUserMutation.isPending ? (
                             <>
