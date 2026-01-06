@@ -16,7 +16,6 @@ interface AddUserButtonProps {
 
 export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
     const [username, setUsername] = useState("");
-    const [role, setRole] = useState<"writer" | "reader">("reader");
     const [open, setOpen] = useState(false);
 
     const utils = api.useUtils();
@@ -45,7 +44,7 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
             return;
         }
 
-        await addUserMutation.mutateAsync({ token: user.token, idTri, username, role });
+        await addUserMutation.mutateAsync({ token: user.token, idTri, username });
 
         setOpen(false);
     }
@@ -75,20 +74,6 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                             {usersNotInTricount?.map((user) => (
                                 <SelectItem key={user.users} value={user.users}>{user.users}</SelectItem>
                             ))}
-                        </SelectContent>
-                    </Select>
-
-                    <Label htmlFor="role">Rôle</Label>
-                    <Select
-                        value={role}
-                        onValueChange={(value) => setRole(value as "writer" | "reader")}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Sélectionnez un rôle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="writer">Écriture</SelectItem>
-                            <SelectItem value="reader">Lecture</SelectItem>
                         </SelectContent>
                     </Select>
 

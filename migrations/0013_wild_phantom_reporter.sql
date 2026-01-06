@@ -1,0 +1,1 @@
+ALTER TABLE `compta_tri_users` DROP COLUMN `role`;

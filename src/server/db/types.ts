@@ -42,14 +42,4 @@ interface TricountPayee extends User {
     amount: number;
 }
 
-type Role = "owner" | "writer" | "reader";
-type RoleWithAny = Role | "any";
-type RoleWithoutOwner = "writer" | "reader";
-const roleHierarchy: Record<Role, number> = {
-    owner: 3,
-    writer: 2,
-    reader: 1,
-};
-
-export type { Category, Tricount, TricountInteraction, TricountPayee, MeUser, User, Role, RoleWithAny, RoleWithoutOwner };
-export { roleHierarchy };
+export type { Category, Tricount, TricountInteraction, TricountPayee, MeUser, User };

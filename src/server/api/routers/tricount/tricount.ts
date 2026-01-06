@@ -4,7 +4,7 @@ import { tri, tri_users, users } from "@/server/db/schema";
 import { and, eq, getTableColumns, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
-import { roleHierarchy, type RoleWithAny, type TricountInteraction, type User } from "@/server/db/types";
+import { type TricountInteraction, type User } from "@/server/db/types";
 import { createCaller } from "../../root";
 import { uint8ArrayToBase64 } from "@/lib/utils";
 
@@ -141,7 +141,7 @@ const tricountRouter = createTRPCRouter({
 
         const triData = await ctx.db.insert(tri).values({ name: input.name }).returning();
 
-        await ctx.db.insert(tri_users).values({ username: user.username, idTri: triData[0]!.id, role: "owner" }).returning();
+        await ctx.db.insert(tri_users).values({ username: user.username, idTri: triData[0]!.id }).returning();
 
         return triData[0]!.id;
     }),
@@ -153,7 +153,7 @@ const tricountRouter = createTRPCRouter({
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user.username, input.idTri, "owner");
+        await hasAccess(ctx, user.username, input.idTri);
 
         await ctx.db.update(tri).set({ name: input.name }).where(eq(tri.id, input.idTri));
     }),
@@ -162,18 +162,17 @@ const tricountRouter = createTRPCRouter({
         token: z.string(),
         idTri: z.number(),
         username: z.string(),
-        role: z.enum(["writer", "reader"]),
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user.username, input.idTri, "owner");
+        await hasAccess(ctx, user.username, input.idTri);
 
         const triData = await ctx.db.select().from(tri).where(eq(tri.id, input.idTri));
         if (!triData || triData.length === 0) {
             throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
         }
 
-        await ctx.db.insert(tri_users).values({ username: input.username, idTri: triData[0]!.id, role: input.role });
+        await ctx.db.insert(tri_users).values({ username: input.username, idTri: triData[0]!.id });
     }),
 
     removeUserFromTricount: publicProcedure.input(z.object({
@@ -183,7 +182,7 @@ const tricountRouter = createTRPCRouter({
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user.username, input.idTri, "owner");
+        await hasAccess(ctx, user.username, input.idTri);
 
         await ctx.db.delete(tri_users).where(and(eq(tri_users.username, input.username), eq(tri_users.idTri, input.idTri)));
     }),
@@ -219,7 +218,7 @@ const tricountRouter = createTRPCRouter({
     })).query(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user.username, input.idTri, "owner");
+        await hasAccess(ctx, user.username, input.idTri);
 
         return await ctx.db
             .select({ users: users.username })
@@ -230,7 +229,7 @@ const tricountRouter = createTRPCRouter({
 });
 
 
-const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, idTri: number, checkRole: RoleWithAny = "any") => {
+const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, idTri: number) => {
     const cachedUserAccess = ctx.cache.get(`tricount-access-${username}-${idTri}`);
     if (cachedUserAccess) {
         return cachedUserAccess as boolean;
@@ -243,16 +242,6 @@ const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, use
         .limit(1);
 
     if (!userAccess || userAccess.length === 0) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
-    }
-
-    if (checkRole === "any") {
-        ctx.cache.set(`tricount-access-${username}-${idTri}`, true);
-        return;
-    }
-
-    const userRole = userAccess[0]!.role;
-    if (roleHierarchy[userRole] < roleHierarchy[checkRole]) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
     }
 

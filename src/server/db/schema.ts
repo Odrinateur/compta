@@ -3,7 +3,6 @@
 
 import { sql } from "drizzle-orm";
 import { index, primaryKey, sqliteTableCreator } from "drizzle-orm/sqlite-core";
-import { type Role } from "./types";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -107,7 +106,6 @@ export const tri_users = createTable(
     (d) => ({
         idTri: d.integer({ mode: "number" }).notNull().references(() => tri.id),
         username: d.text("username").notNull().references(() => users.username),
-        role: d.text("role").$type<Role>().notNull(),
     }),
     (t) => [
         primaryKey({ columns: [t.idTri, t.username] }),
