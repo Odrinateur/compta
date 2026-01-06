@@ -27,7 +27,7 @@ const monthRouter = createTRPCRouter({
             })
             .from(countInteractions)
             .leftJoin(countCategories, eq(countInteractions.categoryId, countCategories.id))
-            .where(and(eq(countInteractions.monthId, month.id), eq(countInteractions.userId, user.username)));
+            .where(and(eq(countInteractions.monthId, month.id), eq(countInteractions.username, user.username)));
 
         return {
             month: month,
@@ -61,17 +61,17 @@ const monthRouter = createTRPCRouter({
     }),
 });
 
-const getMonthByDate = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, userId: string, date: Date, withCreate = true) => {
+const getMonthByDate = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, date: Date, withCreate = true) => {
     const month = await ctx.db.select().from(countMonths).where(and(eq(countMonths.year, date.getFullYear()), eq(countMonths.month, date.getMonth() + 1)));
 
     if (!month || month.length === 0 && withCreate) {
-        return await createNewMonth(ctx, userId, date);
+        return await createNewMonth(ctx, username, date);
     }
 
     return month[0]!;
 }
 
-const createNewMonth = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, userId: string, date: Date) => {
+const createNewMonth = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, date: Date) => {
     const month = await ctx.db.insert(countMonths).values({ year: date.getFullYear(), month: date.getMonth() + 1 }).returning();
 
     const defaultInteractions = await ctx.db
@@ -80,7 +80,7 @@ const createNewMonth = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>
         )
         .from(countInteractions)
         .innerJoin(countEveryMonthInteractions, eq(countInteractions.id, countEveryMonthInteractions.idInteraction))
-        .where(and(eq(countEveryMonthInteractions.isActive, true), eq(countInteractions.userId, userId)));
+        .where(and(eq(countEveryMonthInteractions.isActive, true), eq(countInteractions.username, username)));
 
     for (const interaction of defaultInteractions) {
         await ctx.db.insert(countInteractions).values({
@@ -88,7 +88,7 @@ const createNewMonth = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>
             categoryId: interaction.categoryId,
             amount: interaction.amount,
             monthId: month[0]!.id,
-            userId: userId,
+            username: username,
         });
     }
 

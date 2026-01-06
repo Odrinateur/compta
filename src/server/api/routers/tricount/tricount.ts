@@ -231,6 +231,11 @@ const tricountRouter = createTRPCRouter({
 
 
 const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, idTri: number, checkRole: RoleWithAny = "any") => {
+    const cachedUserAccess = ctx.cache.get(`tricount-access-${username}-${idTri}`);
+    if (cachedUserAccess) {
+        return cachedUserAccess as boolean;
+    }
+
     const userAccess = await ctx.db
         .select()
         .from(tri_users)
@@ -242,6 +247,7 @@ const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, use
     }
 
     if (checkRole === "any") {
+        ctx.cache.set(`tricount-access-${username}-${idTri}`, true);
         return;
     }
 
@@ -249,6 +255,8 @@ const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, use
     if (roleHierarchy[userRole] < roleHierarchy[checkRole]) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
     }
+
+    ctx.cache.set(`tricount-access-${username}-${idTri}`, true);
 }
 
 export default tricountRouter;

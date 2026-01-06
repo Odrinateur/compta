@@ -71,12 +71,12 @@ export const countInteractions = createTable(
         monthId: d.integer({ mode: "number" }).notNull().references(() => countMonths.id),
         categoryId: d.integer({ mode: "number" }).notNull().references(() => countCategories.id),
         amount: d.integer({ mode: "number" }).notNull(),
-        usernamePayer: d.text("username_payer").notNull().references(() => users.username),
+        username: d.text("username_payer").notNull().references(() => users.username),
     }),
     (t) => [
         index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId),
-        index("interactions_month_id_username_payer_idx").on(t.monthId, t.usernamePayer), // Pour getCurrentMonth (WHERE monthId AND usernamePayer)
-        index("interactions_username_payer_idx").on(t.usernamePayer), // Pour createNewMonth (WHERE usernamePayer)
+        index("interactions_month_id_username_payer_idx").on(t.monthId, t.username), // Pour getCurrentMonth (WHERE monthId AND usernamePayer)
+        index("interactions_username_payer_idx").on(t.username), // Pour createNewMonth (WHERE usernamePayer)
     ],
 );
 

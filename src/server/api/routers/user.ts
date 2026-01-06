@@ -86,10 +86,19 @@ const userRouter = createTRPCRouter({
 });
 
 const getUserIfExist = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, token: string) => {
+    const cachedUser = ctx.cache.get(`user-${token}`);
+
+    if (cachedUser) {
+        return cachedUser as MeUser;
+    }
+
     const user = await ctx.db.select().from(tokens).where(eq(tokens.token, token));
     if (!user || user.length === 0) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
     }
+
+    ctx.cache.set(`user-${token}`, user[0]!);
+
     return user[0]!;
 }
 

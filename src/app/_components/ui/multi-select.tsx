@@ -104,7 +104,7 @@ export function useDebounce<T>(value: T, delay?: number): T {
     const [debouncedValue, setDebouncedValue] = React.useState<T>(value)
 
     useEffect(() => {
-        const timer = setTimeout(() => setDebouncedValue(value), delay || 500)
+        const timer = setTimeout(() => setDebouncedValue(value), delay ?? 500)
 
         return () => {
             clearTimeout(timer)
@@ -131,6 +131,7 @@ function transToGroupOption(options: Option[], groupBy?: string) {
         const key = (option[groupBy] as string) || ''
 
         if (!groupOption[key]) {
+            groupOption[key] ??= []
             groupOption[key] = []
         }
 
@@ -201,12 +202,12 @@ const MultipleSelector = ({
     const [isLoading, setIsLoading] = React.useState(false)
     const dropdownRef = React.useRef<HTMLDivElement>(null) // Added this
 
-    const [selected, setSelected] = React.useState<Option[]>(value || [])
+    const [selected, setSelected] = React.useState<Option[]>(value ?? [])
 
     const [options, setOptions] = React.useState<GroupOption>(transToGroupOption(arrayDefaultOptions, groupBy))
 
     const [inputValue, setInputValue] = React.useState('')
-    const debouncedSearchTerm = useDebounce(inputValue, delay || 500)
+    const debouncedSearchTerm = useDebounce(inputValue, delay ?? 500)
 
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
         if (
@@ -240,8 +241,8 @@ const MultipleSelector = ({
                         const lastSelectOption = selected[selected.length - 1]
 
                         // If last item is fixed, we should not remove it.
-                        if (!lastSelectOption.fixed) {
-                            handleUnselect(selected[selected.length - 1])
+                        if (lastSelectOption?.fixed) {
+                            handleUnselect(lastSelectOption)
                         }
                     }
                 }
@@ -295,7 +296,7 @@ const MultipleSelector = ({
         const doSearchSync = () => {
             const res = onSearchSync?.(debouncedSearchTerm)
 
-            setOptions(transToGroupOption(res || [], groupBy))
+            setOptions(transToGroupOption(res ?? [], groupBy))
         }
 
         const exec = async () => {
@@ -321,7 +322,7 @@ const MultipleSelector = ({
             setIsLoading(true)
             const res = await onSearch?.(debouncedSearchTerm)
 
-            setOptions(transToGroupOption(res || [], groupBy))
+            setOptions(transToGroupOption(res ?? [], groupBy))
             setIsLoading(false)
         }
 
@@ -432,7 +433,7 @@ const MultipleSelector = ({
                 commandProps?.onKeyDown?.(e)
             }}
             className={cn('bg-transparent h-auto overflow-visible', commandProps?.className)}
-            shouldFilter={commandProps?.shouldFilter !== undefined ? commandProps.shouldFilter : !onSearch} // When onSearch is provided, we don&lsquo;t want to filter the options. You can still override it.
+            shouldFilter={commandProps?.shouldFilter !== undefined ? commandProps.shouldFilter ?? !onSearch : !onSearch} // When onSearch is provided, we don&lsquo;t want to filter the options. You can still override it.
             filter={commandFilter()}
         >
             <div
@@ -460,7 +461,7 @@ const MultipleSelector = ({
                                     badgeClassName
                                 )}
                                 data-fixed={option.fixed}
-                                data-disabled={disabled || undefined}
+                                data-disabled={disabled ?? undefined}
                             >
                                 {option.label}
                                 <button
@@ -503,7 +504,7 @@ const MultipleSelector = ({
                             setOpen(true)
 
                             if (triggerSearchOnFocus) {
-                                onSearch?.(debouncedSearchTerm)
+                                void onSearch?.(debouncedSearchTerm)
                             }
 
                             inputProps?.onFocus?.(event)
@@ -527,11 +528,13 @@ const MultipleSelector = ({
                         }}
                         className={cn(
                             'border border-transparent focus-visible:border-ring rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 top-0 right-0 absolute flex justify-center items-center hover:cursor-pointer size-9 transition-[color,box-shadow] text-muted-foreground/80 hover:text-foreground',
-                            (hideClearAllButton ||
-                                disabled ||
-                                selected.length < 1 ||
-                                selected.filter(s => s.fixed).length === selected.length) &&
-                            'hidden'
+                            ((hideClearAllButton ??
+                                disabled ??
+                                selected.length < 1 ?
+                                'hidden' :
+                                selected.filter(s => s.fixed).length === selected.length ?
+                                    'hidden' :
+                                    undefined) ?? undefined)
                         )}
                         aria-label='Clear all'
                     >
