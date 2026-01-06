@@ -25,7 +25,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
     const [amount, setAmount] = useState<number>(0);
     const [categoryId, setCategoryId] = useState<number>(0);
     const [isRefunded] = useState<boolean>(false);
-    const [userIdPayer, setUserIdPayer] = useState<string>("");
+    const [usernamePayer, setUsernamePayer] = useState<string>("");
     const [date, setDate] = useState<Date>(new Date());
     const [usersPayees, setUsersPayees] = useState<Option[]>([]);
     const defaultsSetRef = useRef(false);
@@ -36,7 +36,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
     useEffect(() => {
         if (usersInTricount.data && usersInTricount.data.length > 0 && !defaultsSetRef.current) {
             if (user.username && usersInTricount.data.some(u => u.username === user.username)) {
-                setUserIdPayer(user.username);
+                setUsernamePayer(user.username);
             }
 
             const allUsersOptions: Option[] = usersInTricount.data.map((u) => ({
@@ -59,7 +59,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name || !categoryId || !amount || !userIdPayer) {
+        if (!name || !categoryId || !amount || !usernamePayer) {
             return;
         }
 
@@ -79,10 +79,10 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
             name,
             categoryId,
             amount: amountNumber,
-            userIdPayer,
+            usernamePayer,
             isRefunded,
             usersPayees: usersPayees.map((user) => ({
-                userId: user.value,
+                username: user.value,
             })),
             date: date.toISOString(),
         });
@@ -102,9 +102,6 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                         Retour
                     </Button>
                     <h1 className="font-semibold text-2xl tracking-tight">Nouvelle interaction</h1>
-                    <p className="mt-1.5 text-muted-foreground text-sm">
-                        Ajoutez une nouvelle dépense ou remboursement au tricount
-                    </p>
                 </div>
 
                 <Card className="shadow-lg">
@@ -122,6 +119,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                     onChange={(e) => setName(e.target.value)}
                                     className="h-10"
                                     required
+                                    autoFocus
                                 />
                             </div>
 
@@ -181,7 +179,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                                 <Label htmlFor="payer" className="font-medium text-sm">
                                     Utilisateur qui a payé
                                 </Label>
-                                <Select value={userIdPayer} onValueChange={setUserIdPayer}>
+                                <Select value={usernamePayer} onValueChange={setUsernamePayer}>
                                     <SelectTrigger id="payer" className="w-full h-10">
                                         <SelectValue placeholder="Sélectionnez un utilisateur" />
                                     </SelectTrigger>
@@ -219,7 +217,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={addInteractionMutation.isPending || !name || !categoryId || !amount || !userIdPayer}
+                                disabled={addInteractionMutation.isPending || !name || !categoryId || !amount || !usernamePayer}
                                 className="min-w-[140px]"
                             >
                                 {addInteractionMutation.isPending ? (

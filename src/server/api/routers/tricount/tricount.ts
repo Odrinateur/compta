@@ -21,7 +21,7 @@ const tricountRouter = createTRPCRouter({
             })
             .from(tri)
             .leftJoin(tri_users, eq(tri.id, tri_users.idTri))
-            .where(eq(tri_users.userId, user.username));
+            .where(eq(tri_users.username, user.username));
     }),
 
     getTricountById: publicProcedure.input(z.object({
@@ -80,7 +80,7 @@ const tricountRouter = createTRPCRouter({
         const usersMap = new Map<string, User>();
         for (const interaction of activeInteractions) {
             usersMap.set(interaction.userPayer.username, interaction.userPayer);
-            for (const payee of interaction.payees) {
+            for (const payee of interaction.usersPayees) {
                 usersMap.set(payee.username, payee);
             }
         }
@@ -89,7 +89,7 @@ const tricountRouter = createTRPCRouter({
         const debts: Record<string, Record<string, number>> = {};
         for (const interaction of activeInteractions) {
             const payer = interaction.userPayer.username;
-            for (const payee of interaction.payees) {
+            for (const payee of interaction.usersPayees) {
                 if (payee.username !== payer) {
                     debts[payee.username] ??= {};
                     debts[payee.username]![payer] = (debts[payee.username]![payer] ?? 0) + payee.amount;
@@ -141,7 +141,7 @@ const tricountRouter = createTRPCRouter({
 
         const triData = await ctx.db.insert(tri).values({ name: input.name }).returning();
 
-        await ctx.db.insert(tri_users).values({ userId: user.username, idTri: triData[0]!.id, role: "owner" }).returning();
+        await ctx.db.insert(tri_users).values({ username: user.username, idTri: triData[0]!.id, role: "owner" }).returning();
 
         return triData[0]!.id;
     }),
@@ -161,7 +161,7 @@ const tricountRouter = createTRPCRouter({
     addUserToTricount: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
-        userId: z.string(),
+        username: z.string(),
         role: z.enum(["writer", "reader"]),
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
@@ -173,19 +173,19 @@ const tricountRouter = createTRPCRouter({
             throw new TRPCError({ code: "NOT_FOUND", message: "Tricount not found" });
         }
 
-        await ctx.db.insert(tri_users).values({ userId: input.userId, idTri: triData[0]!.id, role: input.role });
+        await ctx.db.insert(tri_users).values({ username: input.username, idTri: triData[0]!.id, role: input.role });
     }),
 
     removeUserFromTricount: publicProcedure.input(z.object({
         token: z.string(),
         idTri: z.number(),
-        userId: z.string(),
+        username: z.string(),
     })).mutation(async ({ ctx, input }) => {
         const user = await getUserIfExist(ctx, input.token);
 
         await hasAccess(ctx, user.username, input.idTri, "owner");
 
-        await ctx.db.delete(tri_users).where(and(eq(tri_users.userId, input.userId), eq(tri_users.idTri, input.idTri)));
+        await ctx.db.delete(tri_users).where(and(eq(tri_users.username, input.username), eq(tri_users.idTri, input.idTri)));
     }),
 
     getUsersInTricount: publicProcedure.input(z.object({
@@ -203,7 +203,7 @@ const tricountRouter = createTRPCRouter({
                 type: users.type,
             })
             .from(tri_users)
-            .innerJoin(users, eq(tri_users.userId, users.username))
+            .innerJoin(users, eq(tri_users.username, users.username))
             .where(eq(tri_users.idTri, input.idTri));
 
         return usersInTricount.map(u => ({
@@ -224,8 +224,8 @@ const tricountRouter = createTRPCRouter({
         return await ctx.db
             .select({ users: users.username })
             .from(users)
-            .leftJoin(tri_users, and(eq(tri_users.userId, users.username), eq(tri_users.idTri, input.idTri)))
-            .where(isNull(tri_users.userId));
+            .leftJoin(tri_users, and(eq(tri_users.username, users.username), eq(tri_users.idTri, input.idTri)))
+            .where(isNull(tri_users.username));
     }),
 });
 
@@ -234,7 +234,7 @@ const hasAccess = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, use
     const userAccess = await ctx.db
         .select()
         .from(tri_users)
-        .where(and(eq(tri_users.userId, username), eq(tri_users.idTri, idTri)))
+        .where(and(eq(tri_users.username, username), eq(tri_users.idTri, idTri)))
         .limit(1);
 
     if (!userAccess || userAccess.length === 0) {

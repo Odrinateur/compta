@@ -14,6 +14,7 @@ import { H3 } from "../../ui/typography";
 import { formatAmount, formatDate } from "@/lib/utils";
 import OneAvatar from "../users/one-avatar";
 import { AvatarsWithInteraction } from "../users/avatars";
+import { Badge } from "../../ui/badge";
 
 interface TricountInteractionCardProps {
     interaction: TricountInteraction;
@@ -23,13 +24,23 @@ interface TricountInteractionCardProps {
 function TricountInteractionCard({ interaction, user }: TricountInteractionCardProps) {
     const utils = api.useUtils();
     const setInteractionRefundedMutation = api.tricountInteraction.setInteractionRefunded.useMutation({
-        onSuccess: () => {
+        onMutate: async (variables) => {
+            utils.tricountInteraction.getInteractionsByTricount.setData(
+                { token: user.token, idTri: interaction.triId },
+                (old) => old?.map((inter) =>
+                    inter.id === variables.idInteraction
+                        ? { ...inter, isRefunded: variables.isRefunded }
+                        : inter
+                )
+            );
+        },
+        onSettled: () => {
             void utils.tricountInteraction.getInteractionsByTricount.invalidate({ token: user.token, idTri: interaction.triId });
-        }
+        },
     });
 
     return (
-        <Card className="flex sm:flex-row flex-col items-start sm:items-center gap-3 px-4 py-3" style={interaction.isRefunded ? { opacity: 0.6, pointerEvents: "none" } : undefined}>
+        <Card className="flex sm:flex-row flex-col items-start sm:items-center gap-3 px-4 py-3" style={interaction.isRefunded ? { opacity: 0.6 } : undefined}>
             <div className="flex items-center gap-2">
                 <Checkbox
                     checked={interaction.isRefunded}
@@ -46,12 +57,14 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
                 <p className="text-muted-foreground text-xs">
                     {formatDate(interaction.date)}
                     <span className="mx-1.5">·</span>
-                    {interaction.category.name}
+                    <Badge variant="outline">
+                        {interaction.category.name}
+                    </Badge>
                 </p>
             </div>
 
             <div className="flex justify-between sm:justify-end items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                <AvatarsWithInteraction payees={interaction.payees} currentUser={user} />
+                <AvatarsWithInteraction payees={interaction.usersPayees} currentUser={user} />
 
                 <div className="flex flex-col items-end shrink-0">
                     <span className="font-bold tabular-nums text-lg">
@@ -61,16 +74,16 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
             </div>
 
             <div className="md:hidden flex flex-col gap-1 w-full">
-                {interaction.payees.map((payee) => {
-                    const isCurrentUser = user.username === payee.username;
+                {interaction.usersPayees.map((userPayee) => {
+                    const isCurrentUser = user.username === userPayee.username;
                     return (
-                        <div key={payee.username} className="flex items-center gap-1.5">
+                        <div key={userPayee.username} className="flex items-center gap-1.5">
                             <span className="text-muted-foreground text-xs">
-                                {payee.username}
+                                {userPayee.username}
                                 {isCurrentUser && <span className="text-muted-foreground/70"> (moi)</span>}
                             </span>
                             <span className="font-medium tabular-nums text-xs">
-                                {formatAmount(payee.amount)}
+                                {formatAmount(userPayee.amount)}
                             </span>
                         </div>
                     );

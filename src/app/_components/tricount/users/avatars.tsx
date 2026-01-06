@@ -28,7 +28,7 @@ function Avatars({ user, idTri }: AvatarsProps) {
     });
 
     const handleRemoveUserFromTricount = async (username: string) => {
-        await removeUserFromTricountMutation.mutateAsync({ token: user.token, idTri, userId: username });
+        await removeUserFromTricountMutation.mutateAsync({ token: user.token, idTri, username });
     }
 
     if (isLoading || !users) {

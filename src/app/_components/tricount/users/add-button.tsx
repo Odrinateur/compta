@@ -45,7 +45,7 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
             return;
         }
 
-        await addUserMutation.mutateAsync({ token: user.token, idTri, userId: username, role });
+        await addUserMutation.mutateAsync({ token: user.token, idTri, username, role });
 
         setOpen(false);
     }
@@ -59,17 +59,17 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add a user</DialogTitle>
+                    <DialogTitle>Ajouter un utilisateur</DialogTitle>
                 </DialogHeader>
 
                 <div className="gap-2 grid">
-                    <Label htmlFor="username">Username</Label>
+                    <Label htmlFor="username">Nom d&apos;utilisateur</Label>
                     <Select
                         value={username}
                         onValueChange={(value) => setUsername(value)}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a user" />
+                            <SelectValue placeholder="Sélectionnez un utilisateur" />
                         </SelectTrigger>
                         <SelectContent>
                             {usersNotInTricount?.map((user) => (
@@ -78,24 +78,24 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                         </SelectContent>
                     </Select>
 
-                    <Label htmlFor="role">Role</Label>
+                    <Label htmlFor="role">Rôle</Label>
                     <Select
                         value={role}
                         onValueChange={(value) => setRole(value as "writer" | "reader")}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Select a role" />
+                            <SelectValue placeholder="Sélectionnez un rôle" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="writer">Writer</SelectItem>
-                            <SelectItem value="reader">Reader</SelectItem>
+                            <SelectItem value="writer">Écriture</SelectItem>
+                            <SelectItem value="reader">Lecture</SelectItem>
                         </SelectContent>
                     </Select>
 
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button variant="outline" disabled={addUserMutation.isPending}>Cancel</Button>
+                        <Button variant="outline" disabled={addUserMutation.isPending}>Annuler</Button>
                     </DialogClose>
                     <Button
                         type="submit"
@@ -108,7 +108,7 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                                 <Loader2 className="size-4 animate-spin" />
                             </>
                         ) : (
-                            "Add"
+                            "Ajouter"
                         )}
                     </Button>
                 </DialogFooter>

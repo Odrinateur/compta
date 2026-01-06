@@ -26,20 +26,20 @@ const tricountInteractionRouter = createTRPCRouter({
             })
             .from(tri_interactions)
             .innerJoin(tri_categories, eq(tri_interactions.categoryId, tri_categories.id))
-            .innerJoin(users, eq(tri_interactions.userIdPayer, users.username))
+            .innerJoin(users, eq(tri_interactions.usernamePayer, users.username))
             .where(eq(tri_interactions.triId, input.idTri));
 
         const interactionIds = interactionsRaw.map(i => i.id);
         const allPayees = interactionIds.length > 0 ? await ctx.db
             .select({
                 idInteraction: tri_users_payees.idInteraction,
-                userIdPayee: tri_users_payees.userIdPayee,
+                usernamePayee: tri_users_payees.usernamePayee,
                 amount: tri_users_payees.amount,
                 picture: users.picture,
                 type: users.type,
             })
             .from(tri_users_payees)
-            .innerJoin(users, eq(tri_users_payees.userIdPayee, users.username))
+            .innerJoin(users, eq(tri_users_payees.usernamePayee, users.username))
             .where(
                 inArray(tri_users_payees.idInteraction, interactionIds)
             ) : [];
@@ -57,14 +57,14 @@ const tricountInteractionRouter = createTRPCRouter({
                 name: interaction.category.name,
             },
             userPayer: {
-                username: interaction.userIdPayer,
+                username: interaction.usernamePayer,
                 picture: interaction.payerPicture ? uint8ArrayToBase64(interaction.payerPicture as Uint8Array) : null,
                 type: interaction.payerType,
             },
-            payees: allPayees
+            usersPayees: allPayees
                 .filter((p) => p.idInteraction === interaction.id)
                 .map((p): TricountPayee => ({
-                    username: p.userIdPayee,
+                    username: p.usernamePayee,
                     amount: p.amount,
                     picture: p.picture ? uint8ArrayToBase64(p.picture as Uint8Array) : null,
                     type: p.type,
@@ -89,10 +89,10 @@ const tricountInteractionRouter = createTRPCRouter({
         name: z.string(),
         amount: z.number(),
         categoryId: z.number(),
-        userIdPayer: z.string(),
+        usernamePayer: z.string(),
         isRefunded: z.boolean(),
         usersPayees: z.array(z.object({
-            userId: z.string(),
+            username: z.string(),
         })),
         date: z.string(),
     })).mutation(async ({ ctx, input }) => {
@@ -106,7 +106,7 @@ const tricountInteractionRouter = createTRPCRouter({
             name: input.name,
             amount: amountInCents,
             categoryId: input.categoryId,
-            userIdPayer: input.userIdPayer,
+            usernamePayer: input.usernamePayer,
             isRefunded: input.isRefunded,
             triId: input.idTri,
             date: input.date,
@@ -119,7 +119,7 @@ const tricountInteractionRouter = createTRPCRouter({
         for (const userPayee of input.usersPayees) {
             await ctx.db.insert(tri_users_payees).values({
                 idInteraction: newInteraction.id,
-                userIdPayee: userPayee.userId,
+                usernamePayee: userPayee.username,
                 amount: Math.round(amountInCents / input.usersPayees.length),
             });
         }

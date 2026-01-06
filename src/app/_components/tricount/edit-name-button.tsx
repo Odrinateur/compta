@@ -74,16 +74,16 @@ export default function EditNameButton({ user, idTri, currentName }: EditNameBut
             </Button>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Edit tricount name</DialogTitle>
+                    <DialogTitle>Modifier le nom du tricount</DialogTitle>
                 </DialogHeader>
 
                 <div className="gap-2 grid">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">Nom</Label>
                     <Input
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Enter tricount name"
+                        placeholder="Entrez le nom du tricount"
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
                                 void handleUpdateName();
@@ -93,7 +93,7 @@ export default function EditNameButton({ user, idTri, currentName }: EditNameBut
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button variant="outline" disabled={updateTricountMutation.isPending}>Cancel</Button>
+                        <Button variant="outline" disabled={updateTricountMutation.isPending}>Annuler</Button>
                     </DialogClose>
                     <Button
                         type="submit"
@@ -106,7 +106,7 @@ export default function EditNameButton({ user, idTri, currentName }: EditNameBut
                                 <Loader2 className="size-4 animate-spin" />
                             </>
                         ) : (
-                            "Save"
+                            "Enregistrer"
                         )}
                     </Button>
                 </DialogFooter>

@@ -69,7 +69,7 @@ export const countInteractions = createTable(
         monthId: d.integer({ mode: "number" }).notNull().references(() => countMonths.id),
         categoryId: d.integer({ mode: "number" }).notNull().references(() => countCategories.id),
         amount: d.integer({ mode: "number" }).notNull(),
-        userId: d.text("user_id").notNull().references(() => users.username),
+        usernamePayer: d.text("username_payer").notNull().references(() => users.username),
     }),
     (t) => [index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId)],
 );
@@ -97,12 +97,12 @@ export const tri_users = createTable(
     "tri_users",
     (d) => ({
         idTri: d.integer({ mode: "number" }).notNull().references(() => tri.id),
-        userId: d.text("user_id").notNull().references(() => users.username),
+        username: d.text("username").notNull().references(() => users.username),
         role: d.text("role").$type<Role>().notNull(),
     }),
     (t) => [
-        primaryKey({ columns: [t.idTri, t.userId] }),
-        index("tri_users_user_id_idx").on(t.userId),
+        primaryKey({ columns: [t.idTri, t.username] }),
+        index("tri_users_username_idx").on(t.username),
         index("tri_users_id_tri_idx").on(t.idTri),
     ],
 );
@@ -125,7 +125,7 @@ export const tri_interactions = createTable(
         categoryId: d.integer({ mode: "number" }).notNull().references(() => tri_categories.id),
         triId: d.integer({ mode: "number" }).notNull().references(() => tri.id),
         isRefunded: d.integer({ mode: "boolean" }).notNull().default(false),
-        userIdPayer: d.text("user_id_payer").notNull().references(() => users.username),
+        usernamePayer: d.text("username_payer").notNull().references(() => users.username),
         date: d.text("date").notNull().default(sql`(current_timestamp)`),
     }),
 );
@@ -134,10 +134,10 @@ export const tri_users_payees = createTable(
     "tri_users_payees",
     (d) => ({
         idInteraction: d.integer({ mode: "number" }).notNull().references(() => tri_interactions.id),
-        userIdPayee: d.text("user_id_payee").notNull().references(() => users.username),
+        usernamePayee: d.text("username_payee").notNull().references(() => users.username),
         amount: d.integer({ mode: "number" }).notNull(),
     }),
     (t) => [
-        primaryKey({ columns: [t.idInteraction, t.userIdPayee] }),
+        primaryKey({ columns: [t.idInteraction, t.usernamePayee] }),
     ],
 );

@@ -22,7 +22,7 @@ interface TricountInteraction {
     isRefunded: boolean;
     userPayer: User;
     date: string;
-    payees: TricountPayee[];
+    usersPayees: TricountPayee[];
 }
 
 interface MeUser {
