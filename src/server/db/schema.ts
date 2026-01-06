@@ -16,8 +16,6 @@ export const createTable = sqliteTableCreator(
     (name) => `compta_${name}`,
 );
 
-// TODO: Check for primary keys and foreign keys
-
 export const users = createTable(
     "users",
     (d) => ({
@@ -38,7 +36,11 @@ export const tokens = createTable(
         token: d.text("token").notNull(),
         createdAt: d.text("timestamp").notNull().default(sql`(current_timestamp)`),
     }),
-    (t) => [index("tokens_created_at_idx").on(t.createdAt)],
+    (t) => [
+        index("tokens_created_at_idx").on(t.createdAt),
+        index("tokens_token_idx").on(t.token), // Pour les recherches par token (getUserByToken)
+        index("tokens_username_idx").on(t.username), // Pour les recherches par username
+    ],
 );
 
 export const countCategories = createTable(
@@ -71,7 +73,11 @@ export const countInteractions = createTable(
         amount: d.integer({ mode: "number" }).notNull(),
         usernamePayer: d.text("username_payer").notNull().references(() => users.username),
     }),
-    (t) => [index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId)],
+    (t) => [
+        index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId),
+        index("interactions_month_id_username_payer_idx").on(t.monthId, t.usernamePayer), // Pour getCurrentMonth (WHERE monthId AND usernamePayer)
+        index("interactions_username_payer_idx").on(t.usernamePayer), // Pour createNewMonth (WHERE usernamePayer)
+    ],
 );
 
 export const countEveryMonthInteractions = createTable(
@@ -80,7 +86,10 @@ export const countEveryMonthInteractions = createTable(
         idInteraction: d.integer({ mode: "number" }).primaryKey().references(() => countInteractions.id),
         isActive: d.integer({ mode: "boolean" }).notNull().default(true),
     }),
-    (t) => [index("every_month_interactions_id_interaction_idx").on(t.idInteraction)],
+    (t) => [
+        index("every_month_interactions_id_interaction_idx").on(t.idInteraction),
+        index("every_month_interactions_is_active_idx").on(t.isActive), // Pour createNewMonth (WHERE isActive = true)
+    ],
 );
 
 
@@ -128,6 +137,11 @@ export const tri_interactions = createTable(
         usernamePayer: d.text("username_payer").notNull().references(() => users.username),
         date: d.text("date").notNull().default(sql`(current_timestamp)`),
     }),
+    (t) => [
+        index("tri_interactions_tri_id_idx").on(t.triId), // Pour getInteractionsByTricount (WHERE triId)
+        index("tri_interactions_id_tri_id_idx").on(t.id, t.triId), // Pour removeInteraction et setInteractionRefunded (WHERE id AND triId)
+        index("tri_interactions_date_idx").on(t.date), // Pour trier par date
+    ],
 );
 
 export const tri_users_payees = createTable(
@@ -139,5 +153,7 @@ export const tri_users_payees = createTable(
     }),
     (t) => [
         primaryKey({ columns: [t.idInteraction, t.usernamePayee] }),
+        index("tri_users_payees_id_interaction_idx").on(t.idInteraction), // Pour getInteractionsByTricount et removeInteraction (WHERE idInteraction IN (...))
+        index("tri_users_payees_username_payee_idx").on(t.usernamePayee), // Pour les futures requêtes par utilisateur payeur
     ],
 );

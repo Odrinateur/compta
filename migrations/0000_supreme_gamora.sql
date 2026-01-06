@@ -35,4 +35,5 @@ CREATE TABLE `compta_users` (
 	`timestamp` text DEFAULT (current_timestamp) NOT NULL
 );
 --> statement-breakpoint
+DROP INDEX IF EXISTS `users_created_at_idx`;--> statement-breakpoint
 CREATE INDEX `users_created_at_idx` ON `compta_users` (`timestamp`);
