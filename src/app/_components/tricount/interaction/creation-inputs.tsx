@@ -36,10 +36,14 @@ function TricountInteractionForm({
     const isEditMode = !!interaction;
 
     const [name, setName] = useState(interaction?.name ?? "");
-    const [amount, setAmount] = useState<number>(0);
-    const [categoryId, setCategoryId] = useState<number>(0);
+    const [amount, setAmount] = useState<number>(interaction?.amount ?? 0);
+    const [categoryId, setCategoryId] = useState<number>(
+        interaction?.categoryId ?? 0
+    );
     const [isRefunded] = useState<boolean>(interaction?.isRefunded ?? false);
-    const [usernamePayer, setUsernamePayer] = useState<string>("");
+    const [usernamePayer, setUsernamePayer] = useState<string | undefined>(
+        interaction?.usernamePayer
+    );
     const [date, setDate] = useState<Date>(
         interaction ? new Date(interaction.date) : new Date()
     );
@@ -343,6 +347,8 @@ function TricountInteractionForm({
                                         <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                                         Création...
                                     </>
+                                ) : isEditMode ? (
+                                    "Modifier l'interaction"
                                 ) : (
                                     "Créer l'interaction"
                                 )}
