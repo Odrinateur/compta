@@ -4,7 +4,13 @@ import { Plus } from "lucide-react";
 import { type Category } from "@/server/db/types";
 import { Input } from "../../ui/input";
 import { DatePicker } from "../../ui/date-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../../ui/select";
 import { Button } from "../../ui/button";
 import { Skeleton } from "../../ui/skeleton";
 
@@ -12,14 +18,14 @@ function InteractionCreationInput({ categories }: { categories: Category[] }) {
     return (
         <>
             <section className="flex justify-center gap-4 w-full">
-                <Input
-                    type="text"
-                    placeholder="Nom"
+                <Input type="text" placeholder="Nom" className="w-64" />
+                <DatePicker
+                    date={new Date()}
                     className="w-64"
+                    setDate={(date) => {
+                        console.log(date);
+                    }}
                 />
-                <DatePicker date={new Date()} className="w-64" setDate={(date) => {
-                    console.log(date)
-                }} />
                 <Select>
                     <SelectTrigger className="w-64">
                         <SelectValue placeholder="Catégorie" />
@@ -38,7 +44,7 @@ function InteractionCreationInput({ categories }: { categories: Category[] }) {
                 </Button>
             </section>
         </>
-    )
+    );
 }
 
 function InteractionCreationInputSkeleton() {
@@ -51,6 +57,6 @@ function InteractionCreationInputSkeleton() {
                 <Skeleton className="w-16 h-10" />
             </section>
         </>
-    )
+    );
 }
 export { InteractionCreationInput, InteractionCreationInputSkeleton };

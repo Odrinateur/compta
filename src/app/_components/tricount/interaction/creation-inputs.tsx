@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { Input } from "../../ui/input";
 import { DatePicker } from "../../ui/date-picker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../../ui/select";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 import { Card, CardContent, CardFooter } from "../../ui/card";
@@ -21,7 +27,11 @@ interface TricountInteractionFormProps {
     interaction?: TricountInteraction;
 }
 
-function TricountInteractionForm({ user, idTri, interaction }: TricountInteractionFormProps) {
+function TricountInteractionForm({
+    user,
+    idTri,
+    interaction,
+}: TricountInteractionFormProps) {
     const router = useRouter();
     const isEditMode = !!interaction;
 
@@ -30,27 +40,41 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
     const [categoryId, setCategoryId] = useState<number>(0);
     const [isRefunded] = useState<boolean>(interaction?.isRefunded ?? false);
     const [usernamePayer, setUsernamePayer] = useState<string>("");
-    const [date, setDate] = useState<Date>(interaction ? new Date(interaction.date) : new Date());
+    const [date, setDate] = useState<Date>(
+        interaction ? new Date(interaction.date) : new Date()
+    );
     const [usersPayees, setUsersPayees] = useState<Option[]>(
         interaction?.usersPayees.map((p) => ({
             label: p.username,
             value: p.username,
-        })) ?? [],
+        })) ?? []
     );
     const defaultsSetRef = useRef(isEditMode);
 
-    const categories = api.tricountInteraction.getCategoriesByTricount.useQuery({ token: user.token, idTri });
-    const usersInTricount = api.tricount.getUsersInTricount.useQuery({ token: user.token, idTri });
+    const categories = api.tricountInteraction.getCategoriesByTricount.useQuery(
+        { token: user.token, idTri }
+    );
+    const usersInTricount = api.tricount.getUsersInTricount.useQuery({
+        token: user.token,
+        idTri,
+    });
 
     useEffect(() => {
-        if (usersInTricount.data && usersInTricount.data.length > 0 && !defaultsSetRef.current) {
-            if (user.username && usersInTricount.data.some(u => u.username === user.username)) {
+        if (
+            usersInTricount.data &&
+            usersInTricount.data.length > 0 &&
+            !defaultsSetRef.current
+        ) {
+            if (
+                user.username &&
+                usersInTricount.data.some((u) => u.username === user.username)
+            ) {
                 setUsernamePayer(user.username);
             }
 
             const allUsersOptions: Option[] = usersInTricount.data.map((u) => ({
                 label: u.username,
-                value: u.username
+                value: u.username,
             }));
             setUsersPayees(allUsersOptions);
 
@@ -63,10 +87,12 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
     const addInteractionMutation =
         api.tricountInteraction.createInteraction.useMutation({
             onSuccess: async () => {
-                await utils.tricountInteraction.getInteractionsByTricount.invalidate({
-                    token: user.token,
-                    idTri,
-                });
+                await utils.tricountInteraction.getInteractionsByTricount.invalidate(
+                    {
+                        token: user.token,
+                        idTri,
+                    }
+                );
                 router.push(`/tricount/${idTri}`);
             },
         });
@@ -74,10 +100,12 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
     const updateInteractionMutation =
         api.tricountInteraction.updateInteraction.useMutation({
             onSuccess: async () => {
-                await utils.tricountInteraction.getInteractionsByTricount.invalidate({
-                    token: user.token,
-                    idTri,
-                });
+                await utils.tricountInteraction.getInteractionsByTricount.invalidate(
+                    {
+                        token: user.token,
+                        idTri,
+                    }
+                );
                 router.push(`/tricount/${idTri}`);
             },
         });
@@ -91,7 +119,7 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
             return;
         }
 
-        const category = categories.data?.find(c => c.id === categoryId);
+        const category = categories.data?.find((c) => c.id === categoryId);
         if (!category) {
             return;
         }
@@ -135,7 +163,9 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                         </Button>
                     </Link>
                     <h1 className="font-semibold text-2xl tracking-tight">
-                        {isEditMode ? "Modifier l'interaction" : "Nouvelle interaction"}
+                        {isEditMode
+                            ? "Modifier l'interaction"
+                            : "Nouvelle interaction"}
                     </h1>
                 </div>
 
@@ -143,7 +173,10 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-5 py-6">
                             <div className="space-y-2">
-                                <Label htmlFor="name" className="font-medium text-sm">
+                                <Label
+                                    htmlFor="name"
+                                    className="font-medium text-sm"
+                                >
                                     Nom de l&apos;interaction
                                 </Label>
                                 <Input
@@ -160,7 +193,10 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
 
                             <div className="flex sm:flex-row flex-col gap-4">
                                 <div className="space-y-2 w-full">
-                                    <Label htmlFor="date" className="font-medium text-sm">
+                                    <Label
+                                        htmlFor="date"
+                                        className="font-medium text-sm"
+                                    >
                                         Date
                                     </Label>
                                     <DatePicker
@@ -173,7 +209,10 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                                 </div>
 
                                 <div className="space-y-2 w-full">
-                                    <Label htmlFor="amount" className="font-medium text-sm">
+                                    <Label
+                                        htmlFor="amount"
+                                        className="font-medium text-sm"
+                                    >
                                         Montant
                                     </Label>
                                     <Input
@@ -184,7 +223,9 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                                         step="0.01"
                                         min="0"
                                         value={amount || ""}
-                                        onChange={(e) => setAmount(Number(e.target.value))}
+                                        onChange={(e) =>
+                                            setAmount(Number(e.target.value))
+                                        }
                                         className="h-10"
                                         required
                                     />
@@ -192,19 +233,32 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="category" className="font-medium text-sm">
+                                <Label
+                                    htmlFor="category"
+                                    className="font-medium text-sm"
+                                >
                                     Catégorie
                                 </Label>
                                 <Select
-                                    value={categoryId ? categoryId.toString() : ""}
-                                    onValueChange={(value) => setCategoryId(Number(value))}
+                                    value={
+                                        categoryId ? categoryId.toString() : ""
+                                    }
+                                    onValueChange={(value) =>
+                                        setCategoryId(Number(value))
+                                    }
                                 >
-                                    <SelectTrigger id="category" className="w-full h-10">
+                                    <SelectTrigger
+                                        id="category"
+                                        className="w-full h-10"
+                                    >
                                         <SelectValue placeholder="Sélectionnez une catégorie" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {categories.data?.map((category) => (
-                                            <SelectItem key={category.id} value={category.id.toString()}>
+                                            <SelectItem
+                                                key={category.id}
+                                                value={category.id.toString()}
+                                            >
                                                 {category.name}
                                             </SelectItem>
                                         ))}
@@ -213,32 +267,51 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                             </div>
 
                             <div className="space-y-2 pt-2 sm:pt-0">
-                                <Label htmlFor="payer" className="hidden sm:block font-medium text-sm">
+                                <Label
+                                    htmlFor="payer"
+                                    className="hidden sm:block font-medium text-sm"
+                                >
                                     Utilisateur qui a payé
                                 </Label>
-                                <Select value={usernamePayer} onValueChange={setUsernamePayer}>
-                                    <SelectTrigger id="payer" className="w-full h-10">
+                                <Select
+                                    value={usernamePayer}
+                                    onValueChange={setUsernamePayer}
+                                >
+                                    <SelectTrigger
+                                        id="payer"
+                                        className="w-full h-10"
+                                    >
                                         <SelectValue placeholder="Sélectionnez un utilisateur" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {usersInTricount.data?.map((u) => (
-                                            <SelectItem key={u.username} value={u.username}>{u.username}</SelectItem>
+                                            <SelectItem
+                                                key={u.username}
+                                                value={u.username}
+                                            >
+                                                {u.username}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="payer" className="hidden sm:block font-medium text-sm">
+                                <Label
+                                    htmlFor="payer"
+                                    className="hidden sm:block font-medium text-sm"
+                                >
                                     Utilisateur(s) bénéficiaire(s)
                                 </Label>
                                 <MultipleSelector
                                     value={usersPayees}
                                     onChange={setUsersPayees}
-                                    options={usersInTricount.data?.map((u) => ({
-                                        label: u.username,
-                                        value: u.username
-                                    })) ?? []}
+                                    options={
+                                        usersInTricount.data?.map((u) => ({
+                                            label: u.username,
+                                            value: u.username,
+                                        })) ?? []
+                                    }
                                     placeholder="Sélectionnez un utilisateur"
                                     className="h-10"
                                 />
@@ -248,13 +321,21 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => router.push(`/tricount/${idTri}`)}
+                                onClick={() =>
+                                    router.push(`/tricount/${idTri}`)
+                                }
                             >
                                 Annuler
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={isPending || !name || !categoryId || !amount || !usernamePayer}
+                                disabled={
+                                    isPending ||
+                                    !name ||
+                                    !categoryId ||
+                                    !amount ||
+                                    !usernamePayer
+                                }
                                 className="min-w-[140px]"
                             >
                                 {isPending ? (
@@ -271,7 +352,7 @@ function TricountInteractionForm({ user, idTri, interaction }: TricountInteracti
                 </Card>
             </div>
         </div>
-    )
+    );
 }
 
 function TricountInteractionCreationInputsSkeleton() {

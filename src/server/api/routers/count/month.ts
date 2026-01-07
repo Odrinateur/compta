@@ -1,86 +1,165 @@
 import z from "zod";
-import { createTRPCRouter, publicProcedure, type createTRPCContext } from "@/server/api/trpc";
-import { countCategories, countEveryMonthInteractions, countInteractions, countMonths } from "@/server/db/schema";
+import {
+    createTRPCRouter,
+    publicProcedure,
+    type createTRPCContext,
+} from "@/server/api/trpc";
+import {
+    countCategories,
+    countEveryMonthInteractions,
+    countInteractions,
+    countMonths,
+} from "@/server/db/schema";
 import { eq, and, getTableColumns } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
 
 const monthRouter = createTRPCRouter({
-    getCurrentMonth: publicProcedure.input(z.object({
-        token: z.string(),
-    })).query(async ({ ctx, input }) => {
-        const user = await getUserIfExist(ctx, input.token);
-
-        const date = new Date();
-        const month = await getMonthByDate(ctx, user.username, date);
-
-        const lastMonthDate = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-        const previousMonth = await getMonthByDate(ctx, user.username, lastMonthDate, false);
-
-        const nextMonthDate = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-        const nextMonth = await getMonthByDate(ctx, user.username, nextMonthDate, false);
-
-        const monthInteractions = await ctx.db
-            .select({
-                ...getTableColumns(countInteractions),
-                category: getTableColumns(countCategories),
+    getCurrentMonth: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
             })
-            .from(countInteractions)
-            .leftJoin(countCategories, eq(countInteractions.categoryId, countCategories.id))
-            .where(and(eq(countInteractions.monthId, month.id), eq(countInteractions.username, user.username)));
+        )
+        .query(async ({ ctx, input }) => {
+            const user = await getUserIfExist(ctx, input.token);
 
-        return {
-            month: month,
-            previousMonthId: previousMonth?.id ?? null,
-            nextMonthId: nextMonth?.id ?? null,
-            interactions: monthInteractions,
-        }
-    }),
+            const date = new Date();
+            const month = await getMonthByDate(ctx, user.username, date);
 
-    getCategories: publicProcedure.input(z.object({
-        token: z.string(),
-    })).query(async ({ ctx, input }) => {
-        await getUserIfExist(ctx, input.token);
+            const lastMonthDate = new Date(
+                date.getFullYear(),
+                date.getMonth() - 1,
+                1
+            );
+            const previousMonth = await getMonthByDate(
+                ctx,
+                user.username,
+                lastMonthDate,
+                false
+            );
 
-        return await ctx.db.select().from(countCategories);
-    }),
+            const nextMonthDate = new Date(
+                date.getFullYear(),
+                date.getMonth() + 1,
+                1
+            );
+            const nextMonth = await getMonthByDate(
+                ctx,
+                user.username,
+                nextMonthDate,
+                false
+            );
 
-    addInteraction: publicProcedure.input(z.object({
-        token: z.string(),
-        monthId: z.number(),
-        name: z.string(),
-        categoryId: z.number(),
-        amount: z.number(),
-    })).mutation(async ({ ctx, input }) => {
-        await getUserIfExist(ctx, input.token);
+            const monthInteractions = await ctx.db
+                .select({
+                    ...getTableColumns(countInteractions),
+                    category: getTableColumns(countCategories),
+                })
+                .from(countInteractions)
+                .leftJoin(
+                    countCategories,
+                    eq(countInteractions.categoryId, countCategories.id)
+                )
+                .where(
+                    and(
+                        eq(countInteractions.monthId, month.id),
+                        eq(countInteractions.username, user.username)
+                    )
+                );
 
-        const month = await ctx.db.select().from(countMonths).where(eq(countMonths.id, input.monthId));
-        if (!month || month.length === 0) {
-            throw new TRPCError({ code: "NOT_FOUND", message: "Month not found" });
-        }
-    }),
+            return {
+                month: month,
+                previousMonthId: previousMonth?.id ?? null,
+                nextMonthId: nextMonth?.id ?? null,
+                interactions: monthInteractions,
+            };
+        }),
+
+    getCategories: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+            })
+        )
+        .query(async ({ ctx, input }) => {
+            await getUserIfExist(ctx, input.token);
+
+            return await ctx.db.select().from(countCategories);
+        }),
+
+    addInteraction: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+                monthId: z.number(),
+                name: z.string(),
+                categoryId: z.number(),
+                amount: z.number(),
+            })
+        )
+        .mutation(async ({ ctx, input }) => {
+            await getUserIfExist(ctx, input.token);
+
+            const month = await ctx.db
+                .select()
+                .from(countMonths)
+                .where(eq(countMonths.id, input.monthId));
+            if (!month || month.length === 0) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "Month not found",
+                });
+            }
+        }),
 });
 
-const getMonthByDate = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, date: Date, withCreate = true) => {
-    const month = await ctx.db.select().from(countMonths).where(and(eq(countMonths.year, date.getFullYear()), eq(countMonths.month, date.getMonth() + 1)));
+const getMonthByDate = async (
+    ctx: Awaited<ReturnType<typeof createTRPCContext>>,
+    username: string,
+    date: Date,
+    withCreate = true
+) => {
+    const month = await ctx.db
+        .select()
+        .from(countMonths)
+        .where(
+            and(
+                eq(countMonths.year, date.getFullYear()),
+                eq(countMonths.month, date.getMonth() + 1)
+            )
+        );
 
-    if (!month || month.length === 0 && withCreate) {
+    if (!month || (month.length === 0 && withCreate)) {
         return await createNewMonth(ctx, username, date);
     }
 
     return month[0]!;
-}
+};
 
-const createNewMonth = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, username: string, date: Date) => {
-    const month = await ctx.db.insert(countMonths).values({ year: date.getFullYear(), month: date.getMonth() + 1 }).returning();
+const createNewMonth = async (
+    ctx: Awaited<ReturnType<typeof createTRPCContext>>,
+    username: string,
+    date: Date
+) => {
+    const month = await ctx.db
+        .insert(countMonths)
+        .values({ year: date.getFullYear(), month: date.getMonth() + 1 })
+        .returning();
 
     const defaultInteractions = await ctx.db
-        .select(
-            getTableColumns(countInteractions),
-        )
+        .select(getTableColumns(countInteractions))
         .from(countInteractions)
-        .innerJoin(countEveryMonthInteractions, eq(countInteractions.id, countEveryMonthInteractions.idInteraction))
-        .where(and(eq(countEveryMonthInteractions.isActive, true), eq(countInteractions.username, username)));
+        .innerJoin(
+            countEveryMonthInteractions,
+            eq(countInteractions.id, countEveryMonthInteractions.idInteraction)
+        )
+        .where(
+            and(
+                eq(countEveryMonthInteractions.isActive, true),
+                eq(countInteractions.username, username)
+            )
+        );
 
     for (const interaction of defaultInteractions) {
         await ctx.db.insert(countInteractions).values({

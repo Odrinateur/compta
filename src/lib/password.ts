@@ -11,7 +11,9 @@ export async function hashPassword(password: string): Promise<string> {
     const encoder = new TextEncoder();
 
     // Convert salt to hex string for combining
-    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, "0")).join("");
+    const saltHex = Array.from(salt)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
 
     // Combine password + salt
     const data = encoder.encode(password + saltHex);
@@ -19,7 +21,7 @@ export async function hashPassword(password: string): Promise<string> {
     // Hash with SHA-256
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hash = Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, "0"))
+        .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
 
     // Return salt:hash (both hex encoded)
@@ -42,9 +44,8 @@ export async function verifyPassword(
     const data = encoder.encode(password + saltHex);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const computedHash = Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, "0"))
+        .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
 
     return computedHash === storedHash;
 }
-

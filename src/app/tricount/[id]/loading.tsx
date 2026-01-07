@@ -5,5 +5,5 @@ export default function TricountPageLoading() {
         <div>
             <Skeleton className="w-full h-[500px]" />
         </div>
-    )
+    );
 }

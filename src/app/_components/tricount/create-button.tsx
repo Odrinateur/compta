@@ -1,9 +1,17 @@
 "use client";
 
-import { PlusIcon, Loader2 } from "lucide-react"
-import { Button } from "../ui/button"
+import { PlusIcon, Loader2 } from "lucide-react";
+import { Button } from "../ui/button";
 import { useRef, useState, useEffect } from "react";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { api } from "@/trpc/react";
@@ -13,7 +21,9 @@ interface CreateTricountButtonProps {
     token: string;
 }
 
-export default function CreateTricountButton({ token }: CreateTricountButtonProps) {
+export default function CreateTricountButton({
+    token,
+}: CreateTricountButtonProps) {
     const [tricountName, setTricountName] = useState("");
     const [isMounted, setIsMounted] = useState(false);
 
@@ -31,10 +41,13 @@ export default function CreateTricountButton({ token }: CreateTricountButtonProp
             return;
         }
 
-        const newTricountId = await createTricountMutation.mutateAsync({ token, name: tricountName });
+        const newTricountId = await createTricountMutation.mutateAsync({
+            token,
+            name: tricountName,
+        });
 
         redirect(`/tricount/${newTricountId}`);
-    }
+    };
 
     return (
         <Dialog>
@@ -56,8 +69,11 @@ export default function CreateTricountButton({ token }: CreateTricountButtonProp
                             name="name"
                             value={tricountName}
                             onChange={(e) => setTricountName(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === "Enter" && !createTricountMutation.isPending) {
+                            onKeyDown={(e) => {
+                                if (
+                                    e.key === "Enter" &&
+                                    !createTricountMutation.isPending
+                                ) {
                                     e.preventDefault();
                                     void handleCreateTricount();
                                 }
@@ -69,11 +85,20 @@ export default function CreateTricountButton({ token }: CreateTricountButtonProp
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline" disabled={createTricountMutation.isPending}>Cancel</Button>
+                            <Button
+                                variant="outline"
+                                disabled={createTricountMutation.isPending}
+                            >
+                                Cancel
+                            </Button>
                         </DialogClose>
                         <Button
                             type="submit"
-                            size={createTricountMutation.isPending ? "icon" : "default"}
+                            size={
+                                createTricountMutation.isPending
+                                    ? "icon"
+                                    : "default"
+                            }
                             onClick={handleCreateTricount}
                             disabled={createTricountMutation.isPending}
                         >
@@ -89,5 +114,5 @@ export default function CreateTricountButton({ token }: CreateTricountButtonProp
                 </DialogContent>
             )}
         </Dialog>
-    )
+    );
 }

@@ -6,7 +6,13 @@ import { Skeleton } from "../../ui/skeleton";
 import { Sparkles, Search, ArrowUpDown, X } from "lucide-react";
 import { api } from "@/trpc/react";
 import { Input } from "../../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../../ui/select";
 import { Button } from "../../ui/button";
 import { useState, useMemo } from "react";
 import { Checkbox } from "../../ui/checkbox";
@@ -15,7 +21,12 @@ import { formatAmount } from "@/lib/utils";
 import OneAvatar from "../users/one-avatar";
 import { AvatarsWithInteraction } from "../users/avatars";
 import { Badge } from "../../ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "../../ui/accordion";
 import { useRouter } from "next/navigation";
 
 interface TricountInteractionCardProps {
@@ -23,31 +34,38 @@ interface TricountInteractionCardProps {
     user: MeUser;
 }
 
-function TricountInteractionCard({ interaction, user }: TricountInteractionCardProps) {
+function TricountInteractionCard({
+    interaction,
+    user,
+}: TricountInteractionCardProps) {
     const router = useRouter();
     const utils = api.useUtils();
-    const setInteractionRefundedMutation = api.tricountInteraction.setInteractionRefunded.useMutation({
-        onMutate: async (variables) => {
-            utils.tricountInteraction.getInteractionsByTricount.setData(
-                { token: user.token, idTri: interaction.triId },
-                (old) => old?.map((inter) =>
-                    inter.id === variables.idInteraction
-                        ? { ...inter, isRefunded: variables.isRefunded }
-                        : inter
-                )
-            );
-        },
-        onSettled: () => {
-            void utils.tricountInteraction.getInteractionsByTricount.invalidate({ token: user.token, idTri: interaction.triId });
-        },
-    });
+    const setInteractionRefundedMutation =
+        api.tricountInteraction.setInteractionRefunded.useMutation({
+            onMutate: async (variables) => {
+                utils.tricountInteraction.getInteractionsByTricount.setData(
+                    { token: user.token, idTri: interaction.triId },
+                    (old) =>
+                        old?.map((inter) =>
+                            inter.id === variables.idInteraction
+                                ? { ...inter, isRefunded: variables.isRefunded }
+                                : inter
+                        )
+                );
+            },
+            onSettled: () => {
+                void utils.tricountInteraction.getInteractionsByTricount.invalidate(
+                    { token: user.token, idTri: interaction.triId }
+                );
+            },
+        });
 
     const handleCardClick = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('[role="checkbox"]')) {
             return;
         }
         router.push(
-            `/tricount/${interaction.triId}/interaction/${interaction.id}/edit`,
+            `/tricount/${interaction.triId}/interaction/${interaction.id}/edit`
         );
     };
 
@@ -61,7 +79,14 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
                 <div className="flex justify-between items-center gap-2">
                     <Checkbox
                         checked={interaction.isRefunded}
-                        onCheckedChange={(checked) => void setInteractionRefundedMutation.mutate({ token: user.token, idTri: interaction.triId, idInteraction: interaction.id, isRefunded: checked as boolean })}
+                        onCheckedChange={(checked) =>
+                            void setInteractionRefundedMutation.mutate({
+                                token: user.token,
+                                idTri: interaction.triId,
+                                idInteraction: interaction.id,
+                                isRefunded: checked as boolean,
+                            })
+                        }
                         className="size-4"
                     />
                     <H3 className="sm:min-w-[140px] sm:max-w-[200px] font-semibold text-base truncate shrink-0">
@@ -70,15 +95,19 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
                 </div>
 
                 <div className="flex items-center gap-1.5 sm:gap-4 min-w-0">
-                    <OneAvatar user={{ username: interaction.usernamePayer }} currentUser={user} />
-                    <Badge variant="outline">
-                        {interaction.category.name}
-                    </Badge>
+                    <OneAvatar
+                        user={{ username: interaction.usernamePayer }}
+                        currentUser={user}
+                    />
+                    <Badge variant="outline">{interaction.category.name}</Badge>
                 </div>
             </div>
 
             <div className="flex justify-between sm:justify-end items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                <AvatarsWithInteraction payees={interaction.usersPayees} currentUser={user} />
+                <AvatarsWithInteraction
+                    payees={interaction.usersPayees}
+                    currentUser={user}
+                />
 
                 <div className="flex flex-col items-end shrink-0">
                     <span className="font-bold tabular-nums text-lg">
@@ -114,13 +143,29 @@ interface TrictountInteractionGridCardProps {
     idTri: number;
 }
 
-function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridCardProps) {
-    const { data: interactions, isLoading } = api.tricountInteraction.getInteractionsByTricount.useQuery({ token: user.token, idTri });
-    const { data: categories } = api.tricountInteraction.getCategoriesByTricount.useQuery({ token: user.token, idTri });
-    const { data: users } = api.tricount.getUsersInTricount.useQuery({ token: user.token, idTri });
+function TrictountInteractionGridCard({
+    user,
+    idTri,
+}: TrictountInteractionGridCardProps) {
+    const { data: interactions, isLoading } =
+        api.tricountInteraction.getInteractionsByTricount.useQuery({
+            token: user.token,
+            idTri,
+        });
+    const { data: categories } =
+        api.tricountInteraction.getCategoriesByTricount.useQuery({
+            token: user.token,
+            idTri,
+        });
+    const { data: users } = api.tricount.getUsersInTricount.useQuery({
+        token: user.token,
+        idTri,
+    });
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "payer" | "category">("date-desc");
+    const [sortBy, setSortBy] = useState<
+        "date-desc" | "date-asc" | "payer" | "category"
+    >("date-desc");
     const [filterPayer, setFilterPayer] = useState<string>("all");
     const [filterCategory, setFilterCategory] = useState<string>("all");
     const [filterRefunded, setFilterRefunded] = useState<string>("all");
@@ -131,31 +176,44 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
         let filtered = [...interactions];
 
         if (searchQuery.trim()) {
-            filtered = filtered.filter(interaction =>
-                interaction.name.toLowerCase().includes(searchQuery.toLowerCase())
+            filtered = filtered.filter((interaction) =>
+                interaction.name
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase())
             );
         }
 
         if (filterPayer !== "all") {
-            filtered = filtered.filter(interaction => interaction.usernamePayer === filterPayer);
+            filtered = filtered.filter(
+                (interaction) => interaction.usernamePayer === filterPayer
+            );
         }
 
         if (filterCategory !== "all") {
-            filtered = filtered.filter(interaction => interaction.categoryId === Number(filterCategory));
+            filtered = filtered.filter(
+                (interaction) =>
+                    interaction.categoryId === Number(filterCategory)
+            );
         }
 
         if (filterRefunded !== "all") {
-            filtered = filtered.filter(interaction =>
-                filterRefunded === "refunded" ? interaction.isRefunded : !interaction.isRefunded
+            filtered = filtered.filter((interaction) =>
+                filterRefunded === "refunded"
+                    ? interaction.isRefunded
+                    : !interaction.isRefunded
             );
         }
 
         filtered.sort((a, b) => {
             switch (sortBy) {
                 case "date-desc":
-                    return new Date(b.date).getTime() - new Date(a.date).getTime();
+                    return (
+                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                    );
                 case "date-asc":
-                    return new Date(a.date).getTime() - new Date(b.date).getTime();
+                    return (
+                        new Date(a.date).getTime() - new Date(b.date).getTime()
+                    );
                 case "payer":
                     return a.usernamePayer.localeCompare(b.usernamePayer);
                 case "category":
@@ -166,21 +224,31 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
         });
 
         return filtered;
-    }, [interactions, searchQuery, sortBy, filterPayer, filterCategory, filterRefunded]);
+    }, [
+        interactions,
+        searchQuery,
+        sortBy,
+        filterPayer,
+        filterCategory,
+        filterRefunded,
+    ]);
 
     const groupedByDate = useMemo(() => {
-        return filteredAndSortedInteractions.reduce((acc, interaction) => {
-            const date = new Date(interaction.date);
-            const dateKey = new Intl.DateTimeFormat('fr-FR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-            }).format(date);
+        return filteredAndSortedInteractions.reduce(
+            (acc, interaction) => {
+                const date = new Date(interaction.date);
+                const dateKey = new Intl.DateTimeFormat("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                }).format(date);
 
-            acc[dateKey] ??= [];
-            acc[dateKey].push(interaction);
-            return acc;
-        }, {} as Record<string, TricountInteraction[]>);
+                acc[dateKey] ??= [];
+                acc[dateKey].push(interaction);
+                return acc;
+            },
+            {} as Record<string, TricountInteraction[]>
+        );
     }, [filteredAndSortedInteractions]);
 
     const sortedDates = useMemo(() => {
@@ -204,7 +272,11 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
         return <TrictountInteractionGridCardSkeleton />;
     }
 
-    const hasActiveFilters = searchQuery.trim() !== "" || filterPayer !== "all" || filterCategory !== "all" || filterRefunded !== "all";
+    const hasActiveFilters =
+        searchQuery.trim() !== "" ||
+        filterPayer !== "all" ||
+        filterCategory !== "all" ||
+        filterRefunded !== "all";
 
     return (
         <div className="flex flex-col gap-4 w-full">
@@ -219,7 +291,9 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                                     type="text"
                                     placeholder="Rechercher..."
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) =>
+                                        setSearchQuery(e.target.value)
+                                    }
                                     className="bg-background shadow-xs border-input pr-9 pl-9 h-9"
                                 />
                                 {searchQuery && (
@@ -232,57 +306,98 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                                 )}
                             </div>
 
-                            <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+                            <Select
+                                value={sortBy}
+                                onValueChange={(value) =>
+                                    setSortBy(value as typeof sortBy)
+                                }
+                            >
                                 <SelectTrigger className="w-full sm:w-[180px] h-9">
                                     <div className="flex items-center gap-2 w-full">
                                         <ArrowUpDown className="mr-2 size-4" />
-                                        <SelectValue className="flex-1" placeholder="Trier par" />
+                                        <SelectValue
+                                            className="flex-1"
+                                            placeholder="Trier par"
+                                        />
                                     </div>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="date-desc">Date (récent)</SelectItem>
-                                    <SelectItem value="date-asc">Date (ancien)</SelectItem>
-                                    <SelectItem value="payer">Payé par</SelectItem>
-                                    <SelectItem value="category">Catégorie</SelectItem>
+                                    <SelectItem value="date-desc">
+                                        Date (récent)
+                                    </SelectItem>
+                                    <SelectItem value="date-asc">
+                                        Date (ancien)
+                                    </SelectItem>
+                                    <SelectItem value="payer">
+                                        Payé par
+                                    </SelectItem>
+                                    <SelectItem value="category">
+                                        Catégorie
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
 
-                            <Select value={filterPayer} onValueChange={setFilterPayer}>
+                            <Select
+                                value={filterPayer}
+                                onValueChange={setFilterPayer}
+                            >
                                 <SelectTrigger className="w-full sm:w-[180px] h-9">
                                     <SelectValue placeholder="Payé par" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tous (utilisateurs)</SelectItem>
+                                    <SelectItem value="all">
+                                        Tous (utilisateurs)
+                                    </SelectItem>
                                     {users?.map((user) => (
-                                        <SelectItem key={user.username} value={user.username}>
+                                        <SelectItem
+                                            key={user.username}
+                                            value={user.username}
+                                        >
                                             {user.username}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
 
-                            <Select value={filterCategory} onValueChange={setFilterCategory}>
+                            <Select
+                                value={filterCategory}
+                                onValueChange={setFilterCategory}
+                            >
                                 <SelectTrigger className="w-full sm:w-[180px] h-9">
                                     <SelectValue placeholder="Catégorie" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Toutes (catégories)</SelectItem>
+                                    <SelectItem value="all">
+                                        Toutes (catégories)
+                                    </SelectItem>
                                     {categories?.map((category) => (
-                                        <SelectItem key={category.id} value={String(category.id)}>
+                                        <SelectItem
+                                            key={category.id}
+                                            value={String(category.id)}
+                                        >
                                             {category.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
 
-                            <Select value={filterRefunded} onValueChange={setFilterRefunded}>
+                            <Select
+                                value={filterRefunded}
+                                onValueChange={setFilterRefunded}
+                            >
                                 <SelectTrigger className="w-full sm:w-[180px] h-9">
                                     <SelectValue placeholder="Remboursement" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tous (remboursements)</SelectItem>
-                                    <SelectItem value="refunded">Remboursés</SelectItem>
-                                    <SelectItem value="not-refunded">Non remboursés</SelectItem>
+                                    <SelectItem value="all">
+                                        Tous (remboursements)
+                                    </SelectItem>
+                                    <SelectItem value="refunded">
+                                        Remboursés
+                                    </SelectItem>
+                                    <SelectItem value="not-refunded">
+                                        Non remboursés
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
 
@@ -301,7 +416,6 @@ function TrictountInteractionGridCard({ user, idTri }: TrictountInteractionGridC
                                 <X className="mr-2 size-4" />
                                 Réinitialiser
                             </Button>
-
                         </div>
                     </AccordionContent>
                 </AccordionItem>
@@ -360,4 +474,9 @@ function TrictountInteractionGridCardSkeleton() {
     );
 }
 
-export { TricountInteractionCard, TricountInteractionCardSkeleton, TrictountInteractionGridCard, TrictountInteractionGridCardSkeleton };
+export {
+    TricountInteractionCard,
+    TricountInteractionCardSkeleton,
+    TrictountInteractionGridCard,
+    TrictountInteractionGridCardSkeleton,
+};

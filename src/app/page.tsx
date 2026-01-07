@@ -5,14 +5,10 @@ export default async function Home() {
     return (
         <main className="flex justify-center gap-4 px-8 py-4 h-full">
             <Link href="/count">
-                <Button variant="link">
-                    Count
-                </Button>
+                <Button variant="link">Count</Button>
             </Link>
             <Link href="/tricount">
-                <Button variant="link">
-                    Tricount
-                </Button>
+                <Button variant="link">Tricount</Button>
             </Link>
         </main>
     );

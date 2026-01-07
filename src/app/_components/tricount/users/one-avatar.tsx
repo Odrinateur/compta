@@ -1,6 +1,11 @@
 "use client";
 
-import { type TricountPayee, type MeUser, type User, type TricountPayeeLight } from "@/server/db/types";
+import {
+    type TricountPayee,
+    type MeUser,
+    type User,
+    type TricountPayeeLight,
+} from "@/server/db/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { ResponsiveTooltip } from "../../ui/responsive-tooltip";
 import { formatAmount } from "@/lib/utils";
@@ -14,7 +19,7 @@ interface OneAvatarProps {
 export default function OneAvatar({ user, currentUser }: OneAvatarProps) {
     const { data: avatarUrl } = api.user.getAvatar.useQuery(
         { username: user.username },
-        { staleTime: Infinity },
+        { staleTime: Infinity }
     );
 
     return (
@@ -24,9 +29,15 @@ export default function OneAvatar({ user, currentUser }: OneAvatarProps) {
             content={
                 <>
                     <p>
-                        {user.username} {user.username === currentUser.username && <span className="font-normal text-muted-foreground"> (moi)</span>}
+                        {user.username}{" "}
+                        {user.username === currentUser.username && (
+                            <span className="font-normal text-muted-foreground">
+                                {" "}
+                                (moi)
+                            </span>
+                        )}
                     </p>
-                    {("amount" in user) && <p>{formatAmount(user.amount)}</p>}
+                    {"amount" in user && <p>{formatAmount(user.amount)}</p>}
                 </>
             }
         >

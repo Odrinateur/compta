@@ -15,21 +15,34 @@ interface AvatarsProps {
 function Avatars({ user, idTri }: AvatarsProps) {
     const utils = api.useUtils();
 
-    const { data: users, isLoading } = api.tricount.getUsersInTricount.useQuery({
-        token: user.token,
-        idTri,
-    });
-
-    const removeUserFromTricountMutation = api.tricount.removeUserFromTricount.useMutation({
-        onSuccess: async () => {
-            await utils.tricount.getUsersInTricount.invalidate({ token: user.token, idTri });
-            await utils.tricount.getUsersNotInTricount.invalidate({ token: user.token, idTri });
+    const { data: users, isLoading } = api.tricount.getUsersInTricount.useQuery(
+        {
+            token: user.token,
+            idTri,
         }
-    });
+    );
+
+    const removeUserFromTricountMutation =
+        api.tricount.removeUserFromTricount.useMutation({
+            onSuccess: async () => {
+                await utils.tricount.getUsersInTricount.invalidate({
+                    token: user.token,
+                    idTri,
+                });
+                await utils.tricount.getUsersNotInTricount.invalidate({
+                    token: user.token,
+                    idTri,
+                });
+            },
+        });
 
     const handleRemoveUserFromTricount = async (username: string) => {
-        await removeUserFromTricountMutation.mutateAsync({ token: user.token, idTri, username });
-    }
+        await removeUserFromTricountMutation.mutateAsync({
+            token: user.token,
+            idTri,
+            username,
+        });
+    };
 
     if (isLoading || !users) {
         return null;
@@ -64,7 +77,7 @@ function AvatarWithRemove({
 }: AvatarWithRemoveProps) {
     const { data: avatarUrl } = api.user.getAvatar.useQuery(
         { username: inTricountUser.username },
-        { staleTime: Infinity },
+        { staleTime: Infinity }
     );
 
     return (
@@ -89,7 +102,9 @@ function AvatarWithRemove({
                     src={avatarUrl ?? undefined}
                     alt={inTricountUser.username}
                 />
-                <AvatarFallback>{inTricountUser.username.charAt(0)}</AvatarFallback>
+                <AvatarFallback>
+                    {inTricountUser.username.charAt(0)}
+                </AvatarFallback>
             </Avatar>
         </ResponsiveTooltip>
     );
@@ -100,7 +115,10 @@ interface AvatarsWithInteractionProps {
     currentUser: MeUser;
 }
 
-function AvatarsWithInteraction({ payees, currentUser }: AvatarsWithInteractionProps) {
+function AvatarsWithInteraction({
+    payees,
+    currentUser,
+}: AvatarsWithInteractionProps) {
     if (payees.length === 0) {
         return <></>;
     }
@@ -110,12 +128,16 @@ function AvatarsWithInteraction({ payees, currentUser }: AvatarsWithInteractionP
             <div className="flex items-center -space-x-2 shrink-0">
                 {payees.map((payee) => {
                     return (
-                        <OneAvatar key={payee.username} user={payee} currentUser={currentUser} />
+                        <OneAvatar
+                            key={payee.username}
+                            user={payee}
+                            currentUser={currentUser}
+                        />
                     );
                 })}
             </div>
         </div>
-    )
+    );
 }
 
 export { Avatars, AvatarsWithInteraction };

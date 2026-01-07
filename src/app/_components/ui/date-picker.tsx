@@ -1,26 +1,28 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronDownIcon } from "lucide-react"
+import * as React from "react";
+import { ChevronDownIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface DatePickerProps {
-    date: Date | undefined
-    setDate: (date: Date | undefined) => void
-    className?: string
+    date: Date | undefined;
+    setDate: (date: Date | undefined) => void;
+    className?: string;
 }
 
 export function DatePicker({ date, setDate, className }: DatePickerProps) {
-    const [open, setOpen] = React.useState(false)
-    const [formattedDate, setFormattedDate] = React.useState<string>("Sélectionner une date")
+    const [open, setOpen] = React.useState(false);
+    const [formattedDate, setFormattedDate] = React.useState<string>(
+        "Sélectionner une date"
+    );
 
     React.useEffect(() => {
         if (date) {
@@ -30,11 +32,11 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                     month: "2-digit",
                     year: "numeric",
                 })
-            )
+            );
         } else {
-            setFormattedDate("Sélectionner une date")
+            setFormattedDate("Sélectionner une date");
         }
-    }, [date])
+    }, [date]);
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -42,23 +44,29 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
                 <Button
                     variant="outline"
                     id="date"
-                    className={cn("justify-between w-48 font-normal", className)}
+                    className={cn(
+                        "justify-between w-48 font-normal",
+                        className
+                    )}
                 >
                     {formattedDate}
                     <ChevronDownIcon />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-auto overflow-hidden" align="start">
+            <PopoverContent
+                className="p-0 w-auto overflow-hidden"
+                align="start"
+            >
                 <Calendar
                     mode="single"
                     selected={date}
                     captionLayout="dropdown"
                     onSelect={(date) => {
-                        setDate(date)
-                        setOpen(false)
+                        setDate(date);
+                        setOpen(false);
                     }}
                 />
             </PopoverContent>
         </Popover>
-    )
+    );
 }

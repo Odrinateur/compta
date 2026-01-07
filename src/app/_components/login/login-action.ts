@@ -6,7 +6,11 @@ import { api } from "@/trpc/server";
 import { TRPCError } from "@trpc/server";
 import { uint8ArrayToBase64 } from "@/lib/utils";
 
-export async function loginAction(username: string, password: string, picture: File | null) {
+export async function loginAction(
+    username: string,
+    password: string,
+    picture: File | null
+) {
     try {
         const cookiesStore = await cookies();
 
@@ -33,7 +37,12 @@ export async function loginAction(username: string, password: string, picture: F
             }
 
             try {
-                result = await api.user.createUser({ username, password, picture: pictureBase64, type: picture?.type.split("/")[1] ?? "png" });
+                result = await api.user.createUser({
+                    username,
+                    password,
+                    picture: pictureBase64,
+                    type: picture?.type.split("/")[1] ?? "png",
+                });
             } catch (error) {
                 if (error instanceof TRPCError && error.code === "CONFLICT") {
                     throw new Error("User already exists");
@@ -49,4 +58,3 @@ export async function loginAction(username: string, password: string, picture: F
         throw error;
     }
 }
-

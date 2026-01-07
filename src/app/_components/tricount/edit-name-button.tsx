@@ -3,7 +3,14 @@
 import { type MeUser } from "@/server/db/types";
 import { api } from "@/trpc/react";
 import { useState, useEffect } from "react";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../_components/ui/dialog";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "../../_components/ui/dialog";
 import { Button } from "../../_components/ui/button";
 import { Loader2, PencilIcon } from "lucide-react";
 import { Label } from "../../_components/ui/label";
@@ -15,11 +22,20 @@ interface EditNameButtonProps {
     currentName: string;
 }
 
-export default function EditNameButton({ user, idTri, currentName }: EditNameButtonProps) {
+export default function EditNameButton({
+    user,
+    idTri,
+    currentName,
+}: EditNameButtonProps) {
     const utils = api.useUtils();
     const { data: tricount } = api.tricount.getTricountById.useQuery(
         { token: user.token, idTri },
-        { initialData: { name: currentName, id: idTri } as { name: string; id: number } }
+        {
+            initialData: { name: currentName, id: idTri } as {
+                name: string;
+                id: number;
+            },
+        }
     );
 
     const currentTricountName = tricount?.name ?? currentName;
@@ -30,11 +46,14 @@ export default function EditNameButton({ user, idTri, currentName }: EditNameBut
         onSuccess: async (_, variables) => {
             utils.tricount.getTricountById.setData(
                 { token: user.token, idTri },
-                (oldData) => oldData ? { ...oldData, name: variables.name } : undefined
+                (oldData) =>
+                    oldData ? { ...oldData, name: variables.name } : undefined
             );
-            await utils.tricount.getTricountsByUser.invalidate({ token: user.token });
+            await utils.tricount.getTricountsByUser.invalidate({
+                token: user.token,
+            });
             setOpen(false);
-        }
+        },
     });
 
     useEffect(() => {
@@ -55,8 +74,12 @@ export default function EditNameButton({ user, idTri, currentName }: EditNameBut
             return;
         }
 
-        await updateTricountMutation.mutateAsync({ token: user.token, idTri, name });
-    }
+        await updateTricountMutation.mutateAsync({
+            token: user.token,
+            idTri,
+            name,
+        });
+    };
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -93,13 +116,26 @@ export default function EditNameButton({ user, idTri, currentName }: EditNameBut
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button variant="outline" disabled={updateTricountMutation.isPending}>Annuler</Button>
+                        <Button
+                            variant="outline"
+                            disabled={updateTricountMutation.isPending}
+                        >
+                            Annuler
+                        </Button>
                     </DialogClose>
                     <Button
                         type="submit"
-                        size={updateTricountMutation.isPending ? "icon" : "default"}
+                        size={
+                            updateTricountMutation.isPending
+                                ? "icon"
+                                : "default"
+                        }
                         onClick={handleUpdateName}
-                        disabled={updateTricountMutation.isPending || name.length === 0 || name === currentTricountName}
+                        disabled={
+                            updateTricountMutation.isPending ||
+                            name.length === 0 ||
+                            name === currentTricountName
+                        }
                     >
                         {updateTricountMutation.isPending ? (
                             <>
@@ -112,6 +148,5 @@ export default function EditNameButton({ user, idTri, currentName }: EditNameBut
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
-

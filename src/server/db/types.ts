@@ -51,4 +51,13 @@ interface TricountPayeeLight {
     amount: number;
 }
 
-export type { Category, Tricount, TricountInteraction, TricountPayeeLight, TricountPayee, MeUser, User, UserLight };
+export type {
+    Category,
+    Tricount,
+    TricountInteraction,
+    TricountPayeeLight,
+    TricountPayee,
+    MeUser,
+    User,
+    UserLight,
+};

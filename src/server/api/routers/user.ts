@@ -1,5 +1,9 @@
 import z from "zod";
-import { type createTRPCContext, createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import {
+    type createTRPCContext,
+    createTRPCRouter,
+    publicProcedure,
+} from "@/server/api/trpc";
 import { tokens, users } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -9,104 +13,168 @@ import { type MeUser } from "@/server/db/types";
 import { base64ToUint8Array, uint8ArrayToBase64 } from "@/lib/utils";
 
 const userRouter = createTRPCRouter({
-    createUser: publicProcedure.input(z.object({
-        username: z.string(),
-        password: z.string(),
-        picture: z.string().optional(),
-        type: z.string().optional(),
-    })).mutation(async ({ ctx, input }) => {
-        const userResult = await ctx.db.select().from(users).where(eq(users.username, input.username));
-        if (userResult && userResult.length > 0) {
-            throw new TRPCError({ code: "CONFLICT", message: "User already exists" });
-        }
+    createUser: publicProcedure
+        .input(
+            z.object({
+                username: z.string(),
+                password: z.string(),
+                picture: z.string().optional(),
+                type: z.string().optional(),
+            })
+        )
+        .mutation(async ({ ctx, input }) => {
+            const userResult = await ctx.db
+                .select()
+                .from(users)
+                .where(eq(users.username, input.username));
+            if (userResult && userResult.length > 0) {
+                throw new TRPCError({
+                    code: "CONFLICT",
+                    message: "User already exists",
+                });
+            }
 
-        const hashedPassword = await hashPassword(input.password);
-        const pictureBuffer = input.picture ? base64ToUint8Array(input.picture) : undefined;
+            const hashedPassword = await hashPassword(input.password);
+            const pictureBuffer = input.picture
+                ? base64ToUint8Array(input.picture)
+                : undefined;
 
-        await ctx.db.insert(users).values({
-            username: input.username,
-            hashedPassword,
-            ...(pictureBuffer !== undefined && { picture: pictureBuffer }),
-            type: input.type,
-        });
+            await ctx.db.insert(users).values({
+                username: input.username,
+                hashedPassword,
+                ...(pictureBuffer !== undefined && { picture: pictureBuffer }),
+                type: input.type,
+            });
 
-        const token = generateToken();
-        await ctx.db.insert(tokens).values({ username: input.username, token });
-
-        return { token };
-    }),
-    getUser: publicProcedure.input(z.object({
-        username: z.string(),
-        password: z.string(),
-    })).query(async ({ ctx, input }) => {
-        const userResult = await ctx.db.select().from(users).where(eq(users.username, input.username));
-
-        if (!userResult || userResult.length === 0) {
-            return null;
-        } else if (!(await verifyPassword(input.password, userResult[0]!.hashedPassword))) {
-            throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid password" });
-        }
-
-        const tokenResult = await ctx.db.select().from(tokens).where(eq(tokens.username, input.username));
-
-        if (!tokenResult || tokenResult.length === 0) {
             const token = generateToken();
-            await ctx.db.insert(tokens).values({ username: input.username, token });
+            await ctx.db
+                .insert(tokens)
+                .values({ username: input.username, token });
 
             return { token };
-        }
+        }),
+    getUser: publicProcedure
+        .input(
+            z.object({
+                username: z.string(),
+                password: z.string(),
+            })
+        )
+        .query(async ({ ctx, input }) => {
+            const userResult = await ctx.db
+                .select()
+                .from(users)
+                .where(eq(users.username, input.username));
 
-        return { token: tokenResult[0]!.token };
-    }),
-    getUserByToken: publicProcedure.input(z.object({
-        token: z.string(),
-    })).query(async ({ ctx, input }): Promise<MeUser | null> => {
-        const tokenResult = await ctx.db.select().from(tokens).where(eq(tokens.token, input.token));
+            if (!userResult || userResult.length === 0) {
+                return null;
+            } else if (
+                !(await verifyPassword(
+                    input.password,
+                    userResult[0]!.hashedPassword
+                ))
+            ) {
+                throw new TRPCError({
+                    code: "UNAUTHORIZED",
+                    message: "Invalid password",
+                });
+            }
 
-        if (!tokenResult || tokenResult.length === 0) {
-            return null;
-        }
+            const tokenResult = await ctx.db
+                .select()
+                .from(tokens)
+                .where(eq(tokens.username, input.username));
 
-        const username = tokenResult[0]!.username;
-        const userResult = await ctx.db.select().from(users).where(eq(users.username, username));
+            if (!tokenResult || tokenResult.length === 0) {
+                const token = generateToken();
+                await ctx.db
+                    .insert(tokens)
+                    .values({ username: input.username, token });
 
-        if (!userResult || userResult.length === 0) {
-            return null;
-        }
+                return { token };
+            }
 
-        const picture = userResult[0]!.picture;
+            return { token: tokenResult[0]!.token };
+        }),
+    getUserByToken: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+            })
+        )
+        .query(async ({ ctx, input }): Promise<MeUser | null> => {
+            const tokenResult = await ctx.db
+                .select()
+                .from(tokens)
+                .where(eq(tokens.token, input.token));
 
-        return {
-            token: tokenResult[0]!.token,
-            username,
-            picture: picture ? uint8ArrayToBase64(picture as Uint8Array) : null,
-            type: userResult[0]!.type,
-        };
-    }),
-    getAvatar: publicProcedure.input(z.object({
-        username: z.string(),
-    })).query(async ({ ctx, input }): Promise<string | null> => {
-        const userResult = await ctx.db.select({ picture: users.picture, type: users.type }).from(users).where(eq(users.username, input.username)).limit(1);
+            if (!tokenResult || tokenResult.length === 0) {
+                return null;
+            }
 
-        if (!userResult || userResult.length === 0 || !userResult[0]!.picture) {
-            return null;
-        }
+            const username = tokenResult[0]!.username;
+            const userResult = await ctx.db
+                .select()
+                .from(users)
+                .where(eq(users.username, username));
 
-        const picture = userResult[0]!.picture;
-        const type = userResult[0]!.type ?? "png";
+            if (!userResult || userResult.length === 0) {
+                return null;
+            }
 
-        return `data:image/${type};base64,${uint8ArrayToBase64(picture as Uint8Array)}`;
-    }),
+            const picture = userResult[0]!.picture;
+
+            return {
+                token: tokenResult[0]!.token,
+                username,
+                picture: picture
+                    ? uint8ArrayToBase64(picture as Uint8Array)
+                    : null,
+                type: userResult[0]!.type,
+            };
+        }),
+    getAvatar: publicProcedure
+        .input(
+            z.object({
+                username: z.string(),
+            })
+        )
+        .query(async ({ ctx, input }): Promise<string | null> => {
+            const userResult = await ctx.db
+                .select({ picture: users.picture, type: users.type })
+                .from(users)
+                .where(eq(users.username, input.username))
+                .limit(1);
+
+            if (
+                !userResult ||
+                userResult.length === 0 ||
+                !userResult[0]!.picture
+            ) {
+                return null;
+            }
+
+            const picture = userResult[0]!.picture;
+            const type = userResult[0]!.type ?? "png";
+
+            return `data:image/${type};base64,${uint8ArrayToBase64(picture as Uint8Array)}`;
+        }),
 });
 
-const getUserIfExist = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>, token: string) => {
+const getUserIfExist = async (
+    ctx: Awaited<ReturnType<typeof createTRPCContext>>,
+    token: string
+) => {
     const cachedUser = ctx.cache.get(`user-${token}`);
 
     if (cachedUser) {
         return cachedUser as MeUser;
     }
 
-    const user = await ctx.db.select().from(tokens).where(eq(tokens.token, token));
+    const user = await ctx.db
+        .select()
+        .from(tokens)
+        .where(eq(tokens.token, token));
     if (!user || user.length === 0) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid token" });
     }
@@ -114,7 +182,7 @@ const getUserIfExist = async (ctx: Awaited<ReturnType<typeof createTRPCContext>>
     ctx.cache.set(`user-${token}`, user[0]!);
 
     return user[0]!;
-}
+};
 
 export default userRouter;
 export { getUserIfExist };

@@ -2,7 +2,11 @@ import { TricountInteractionForm } from "@/app/_components/tricount/interaction/
 import { getUser } from "@/lib/get-user";
 import { redirect } from "next/navigation";
 
-export default async function NewInteractionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function NewInteractionPage({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}) {
     const { id } = await params;
     const user = await getUser();
 

@@ -7,27 +7,36 @@ import { InteractionCreationInput } from "../_components/count/month/interaction
 
 export default async function CountPage() {
     const user = await getUser();
-    const currentMonth = await api.month.getCurrentMonth({ token: user?.token });
+    const currentMonth = await api.month.getCurrentMonth({
+        token: user?.token,
+    });
 
     return (
         <>
-            <section className="flex justify-center gap-4 w-full">
+            <section className="flex w-full justify-center gap-4">
                 {currentMonth.previousMonthId && (
                     <Button variant="outline" size="icon">
-                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowLeft className="h-4 w-4" />
                     </Button>
                 )}
-                <H3>{currentMonth.month.month} - {currentMonth.month.year}</H3>
+                <H3>
+                    {currentMonth.month.month} - {currentMonth.month.year}
+                </H3>
                 {currentMonth.nextMonthId && (
                     <Button variant="outline" size="icon">
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="h-4 w-4" />
                     </Button>
                 )}
             </section>
 
-            <InteractionCreationInput categories={currentMonth.interactions
-                .map((interaction) => interaction.category)
-                .filter((category): category is NonNullable<typeof category> => category !== null)} />
+            <InteractionCreationInput
+                categories={currentMonth.interactions
+                    .map((interaction) => interaction.category)
+                    .filter(
+                        (category): category is NonNullable<typeof category> =>
+                            category !== null
+                    )}
+            />
         </>
     );
 }

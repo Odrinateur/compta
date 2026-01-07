@@ -3,11 +3,25 @@
 import { type MeUser } from "@/server/db/types";
 import { api } from "@/trpc/react";
 import { useState } from "react";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../../ui/dialog";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Loader2, PlusIcon } from "lucide-react";
 import { Label } from "../../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../../ui/select";
 
 interface AddUserButtonProps {
     user: MeUser;
@@ -22,15 +36,22 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
 
     const addUserMutation = api.tricount.addUserToTricount.useMutation({
         onSuccess: async () => {
-            await utils.tricount.getUsersInTricount.invalidate({ token: user.token, idTri });
-            await utils.tricount.getUsersNotInTricount.invalidate({ token: user.token, idTri });
-        }
+            await utils.tricount.getUsersInTricount.invalidate({
+                token: user.token,
+                idTri,
+            });
+            await utils.tricount.getUsersNotInTricount.invalidate({
+                token: user.token,
+                idTri,
+            });
+        },
     });
 
-    const { data: usersNotInTricount, refetch } = api.tricount.getUsersNotInTricount.useQuery(
-        { token: user.token, idTri },
-        { enabled: false }
-    );
+    const { data: usersNotInTricount, refetch } =
+        api.tricount.getUsersNotInTricount.useQuery(
+            { token: user.token, idTri },
+            { enabled: false }
+        );
 
     const handleOpenChange = (isOpen: boolean) => {
         setOpen(isOpen);
@@ -44,10 +65,14 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
             return;
         }
 
-        await addUserMutation.mutateAsync({ token: user.token, idTri, username });
+        await addUserMutation.mutateAsync({
+            token: user.token,
+            idTri,
+            username,
+        });
 
         setOpen(false);
-    }
+    };
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -66,28 +91,37 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                     <Select
                         value={username}
                         onValueChange={(value) => setUsername(value)}
-                        disabled={usersNotInTricount && usersNotInTricount.length === 0}
+                        disabled={usersNotInTricount?.length === 0}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Sélectionnez un utilisateur" />
                         </SelectTrigger>
                         <SelectContent>
                             {usersNotInTricount?.map((user) => (
-                                <SelectItem key={user.users} value={user.users}>{user.users}</SelectItem>
+                                <SelectItem key={user.users} value={user.users}>
+                                    {user.users}
+                                </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
-                        <Button variant="outline" disabled={addUserMutation.isPending}>Annuler</Button>
+                        <Button
+                            variant="outline"
+                            disabled={addUserMutation.isPending}
+                        >
+                            Annuler
+                        </Button>
                     </DialogClose>
                     <Button
                         type="submit"
                         size={addUserMutation.isPending ? "icon" : "default"}
                         onClick={handleAddUser}
-                        disabled={addUserMutation.isPending || usersNotInTricount && usersNotInTricount.length === 0}
+                        disabled={
+                            addUserMutation.isPending ||
+                            usersNotInTricount?.length === 0
+                        }
                     >
                         {addUserMutation.isPending ? (
                             <>
@@ -100,5 +134,5 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
+    );
 }

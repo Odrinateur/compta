@@ -18,7 +18,9 @@ function TricountCard({ tricount, user }: TricountCardProps) {
             <Link href={`/tricount/${tricount.id}`} className="block w-full">
                 <Card className="flex justify-center items-center gap-0 py-0 min-h-[80px]">
                     <div className="flex justify-center items-center px-6 w-full h-full">
-                        <CardTitle className="m-0 text-center leading-normal">{tricount.name}</CardTitle>
+                        <CardTitle className="m-0 text-center leading-normal">
+                            {tricount.name}
+                        </CardTitle>
                     </div>
                 </Card>
             </Link>
@@ -34,11 +36,15 @@ function TricountCard({ tricount, user }: TricountCardProps) {
                         e.stopPropagation();
                     }}
                 >
-                    <EditNameButton user={user} idTri={tricount.id} currentName={tricount.name} />
+                    <EditNameButton
+                        user={user}
+                        idTri={tricount.id}
+                        currentName={tricount.name}
+                    />
                 </div>
             )}
         </div>
-    )
+    );
 }
 
 function TricountCardSkeleton() {
@@ -48,12 +54,13 @@ function TricountCardSkeleton() {
                 <Skeleton className="w-full h-8" />
             </div>
         </Card>
-    )
+    );
 }
 
-
 function TricountCardGrid({ user }: { user: MeUser }) {
-    const { data: tricounts } = api.tricount.getTricountsByUser.useQuery({ token: user.token });
+    const { data: tricounts } = api.tricount.getTricountsByUser.useQuery({
+        token: user.token,
+    });
 
     if (!tricounts) {
         return <TricountCardGridSkeleton />;
@@ -62,10 +69,14 @@ function TricountCardGrid({ user }: { user: MeUser }) {
     return (
         <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
             {tricounts?.map((tricount) => (
-                <TricountCard tricount={tricount} user={user} key={tricount.id} />
+                <TricountCard
+                    tricount={tricount}
+                    user={user}
+                    key={tricount.id}
+                />
             ))}
         </div>
-    )
+    );
 }
 
 function TricountCardGridSkeleton() {
@@ -75,7 +86,12 @@ function TricountCardGridSkeleton() {
                 <TricountCardSkeleton key={index} />
             ))}
         </div>
-    )
+    );
 }
 
-export { TricountCard, TricountCardSkeleton, TricountCardGrid, TricountCardGridSkeleton }
+export {
+    TricountCard,
+    TricountCardSkeleton,
+    TricountCardGrid,
+    TricountCardGridSkeleton,
+};

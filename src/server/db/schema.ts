@@ -11,9 +11,7 @@ import { index, primaryKey, sqliteTableCreator } from "drizzle-orm/sqlite-core";
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  * NOTE: compta_ is the prefix for the table names, you can change it
  */
-export const createTable = sqliteTableCreator(
-    (name) => `compta_${name}`,
-);
+export const createTable = sqliteTableCreator((name) => `compta_${name}`);
 
 export const users = createTable(
     "users",
@@ -22,24 +20,33 @@ export const users = createTable(
         picture: d.blob("picture"),
         type: d.text("type"),
         hashedPassword: d.text("hashed_password").notNull(),
-        createdAt: d.text("timestamp").notNull().default(sql`(current_timestamp)`),
+        createdAt: d
+            .text("timestamp")
+            .notNull()
+            .default(sql`(current_timestamp)`),
     }),
-    (t) => [index("users_created_at_idx").on(t.createdAt)],
+    (t) => [index("users_created_at_idx").on(t.createdAt)]
 );
 
 export const tokens = createTable(
     "tokens",
     (d) => ({
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
-        username: d.text("username").notNull().references(() => users.username),
+        username: d
+            .text("username")
+            .notNull()
+            .references(() => users.username),
         token: d.text("token").notNull(),
-        createdAt: d.text("timestamp").notNull().default(sql`(current_timestamp)`),
+        createdAt: d
+            .text("timestamp")
+            .notNull()
+            .default(sql`(current_timestamp)`),
     }),
     (t) => [
         index("tokens_created_at_idx").on(t.createdAt),
         index("tokens_token_idx").on(t.token), // Pour les recherches par token (getUserByToken)
         index("tokens_username_idx").on(t.username), // Pour les recherches par username
-    ],
+    ]
 );
 
 export const countCategories = createTable(
@@ -49,7 +56,7 @@ export const countCategories = createTable(
         name: d.text("name").notNull(),
         default: d.integer({ mode: "boolean" }).notNull().default(false),
     }),
-    (t) => [index("categories_name_idx").on(t.name)],
+    (t) => [index("categories_name_idx").on(t.name)]
 );
 
 export const countMonths = createTable(
@@ -59,7 +66,7 @@ export const countMonths = createTable(
         year: d.integer({ mode: "number" }).notNull(),
         month: d.integer({ mode: "number" }).notNull(),
     }),
-    (t) => [index("months_year_month_idx").on(t.year, t.month)],
+    (t) => [index("months_year_month_idx").on(t.year, t.month)]
 );
 
 export const countInteractions = createTable(
@@ -67,30 +74,49 @@ export const countInteractions = createTable(
     (d) => ({
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
         name: d.text("name").notNull(),
-        monthId: d.integer({ mode: "number" }).notNull().references(() => countMonths.id),
-        categoryId: d.integer({ mode: "number" }).notNull().references(() => countCategories.id),
+        monthId: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => countMonths.id),
+        categoryId: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => countCategories.id),
         amount: d.integer({ mode: "number" }).notNull(),
-        username: d.text("username_payer").notNull().references(() => users.username),
+        username: d
+            .text("username_payer")
+            .notNull()
+            .references(() => users.username),
     }),
     (t) => [
-        index("interactions_month_id_category_id_idx").on(t.monthId, t.categoryId),
-        index("interactions_month_id_username_payer_idx").on(t.monthId, t.username), // Pour getCurrentMonth (WHERE monthId AND usernamePayer)
+        index("interactions_month_id_category_id_idx").on(
+            t.monthId,
+            t.categoryId
+        ),
+        index("interactions_month_id_username_payer_idx").on(
+            t.monthId,
+            t.username
+        ), // Pour getCurrentMonth (WHERE monthId AND usernamePayer)
         index("interactions_username_payer_idx").on(t.username), // Pour createNewMonth (WHERE usernamePayer)
-    ],
+    ]
 );
 
 export const countEveryMonthInteractions = createTable(
     "count_every_month_interactions",
     (d) => ({
-        idInteraction: d.integer({ mode: "number" }).primaryKey().references(() => countInteractions.id),
+        idInteraction: d
+            .integer({ mode: "number" })
+            .primaryKey()
+            .references(() => countInteractions.id),
         isActive: d.integer({ mode: "boolean" }).notNull().default(true),
     }),
     (t) => [
-        index("every_month_interactions_id_interaction_idx").on(t.idInteraction),
+        index("every_month_interactions_id_interaction_idx").on(
+            t.idInteraction
+        ),
         index("every_month_interactions_is_active_idx").on(t.isActive), // Pour createNewMonth (WHERE isActive = true)
-    ],
+    ]
 );
-
 
 export const tri = createTable(
     "tri",
@@ -98,20 +124,26 @@ export const tri = createTable(
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
         name: d.text("name").notNull(),
     }),
-    (t) => [index("tri_name_idx").on(t.name)],
+    (t) => [index("tri_name_idx").on(t.name)]
 );
 
 export const tri_users = createTable(
     "tri_users",
     (d) => ({
-        idTri: d.integer({ mode: "number" }).notNull().references(() => tri.id),
-        username: d.text("username").notNull().references(() => users.username),
+        idTri: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => tri.id),
+        username: d
+            .text("username")
+            .notNull()
+            .references(() => users.username),
     }),
     (t) => [
         primaryKey({ columns: [t.idTri, t.username] }),
         index("tri_users_username_idx").on(t.username),
         index("tri_users_id_tri_idx").on(t.idTri),
-    ],
+    ]
 );
 
 export const tri_categories = createTable(
@@ -120,7 +152,7 @@ export const tri_categories = createTable(
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
         name: d.text("name").notNull(),
     }),
-    (t) => [index("tri_categories_name_idx").on(t.name)],
+    (t) => [index("tri_categories_name_idx").on(t.name)]
 );
 
 export const tri_interactions = createTable(
@@ -129,29 +161,47 @@ export const tri_interactions = createTable(
         id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
         name: d.text("name").notNull(),
         amount: d.integer({ mode: "number" }).notNull(),
-        categoryId: d.integer({ mode: "number" }).notNull().references(() => tri_categories.id),
-        triId: d.integer({ mode: "number" }).notNull().references(() => tri.id),
+        categoryId: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => tri_categories.id),
+        triId: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => tri.id),
         isRefunded: d.integer({ mode: "boolean" }).notNull().default(false),
-        usernamePayer: d.text("username_payer").notNull().references(() => users.username),
-        date: d.text("date").notNull().default(sql`(current_timestamp)`),
+        usernamePayer: d
+            .text("username_payer")
+            .notNull()
+            .references(() => users.username),
+        date: d
+            .text("date")
+            .notNull()
+            .default(sql`(current_timestamp)`),
     }),
     (t) => [
         index("tri_interactions_tri_id_idx").on(t.triId), // Pour getInteractionsByTricount (WHERE triId)
         index("tri_interactions_id_tri_id_idx").on(t.id, t.triId), // Pour removeInteraction et setInteractionRefunded (WHERE id AND triId)
         index("tri_interactions_date_idx").on(t.date), // Pour trier par date
-    ],
+    ]
 );
 
 export const tri_users_payees = createTable(
     "tri_users_payees",
     (d) => ({
-        idInteraction: d.integer({ mode: "number" }).notNull().references(() => tri_interactions.id),
-        usernamePayee: d.text("username_payee").notNull().references(() => users.username),
+        idInteraction: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => tri_interactions.id),
+        usernamePayee: d
+            .text("username_payee")
+            .notNull()
+            .references(() => users.username),
         amount: d.integer({ mode: "number" }).notNull(),
     }),
     (t) => [
         primaryKey({ columns: [t.idInteraction, t.usernamePayee] }),
         index("tri_users_payees_id_interaction_idx").on(t.idInteraction), // Pour getInteractionsByTricount et removeInteraction (WHERE idInteraction IN (...))
         index("tri_users_payees_username_payee_idx").on(t.usernamePayee), // Pour les futures requêtes par utilisateur payeur
-    ],
+    ]
 );

@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
+    return twMerge(clsx(inputs));
 }
 
 export function formatAmount(amount: number): string {
@@ -14,10 +14,10 @@ export function formatAmount(amount: number): string {
 
 export function formatDate(dateStr: string): string {
     const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('fr-FR', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
+    return new Intl.DateTimeFormat("fr-FR", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
     }).format(date);
 }
 
@@ -45,7 +45,6 @@ export function base64ToUint8Array(base64: string): Uint8Array {
         return bytes;
     }
 }
-
 
 export const MAX_IMAGE_SIZE = 800; // Taille maximale en pixels
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -87,7 +86,9 @@ export function resizeImage(file: File): Promise<File> {
                 canvas.toBlob(
                     (blob) => {
                         if (!blob) {
-                            reject(new Error("Impossible de compresser l'image"));
+                            reject(
+                                new Error("Impossible de compresser l'image")
+                            );
                             return;
                         }
                         const resizedFile = new File([blob], file.name, {
@@ -100,10 +101,12 @@ export function resizeImage(file: File): Promise<File> {
                     0.8 // Qualité de compression (0.8 = 80%)
                 );
             };
-            img.onerror = () => reject(new Error("Erreur lors du chargement de l'image"));
+            img.onerror = () =>
+                reject(new Error("Erreur lors du chargement de l'image"));
             img.src = e.target?.result as string;
         };
-        reader.onerror = () => reject(new Error("Erreur lors de la lecture du fichier"));
+        reader.onerror = () =>
+            reject(new Error("Erreur lors de la lecture du fichier"));
         reader.readAsDataURL(file);
     });
 }

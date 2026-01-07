@@ -1,39 +1,40 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
-import { Popover, PopoverTrigger } from "./popover"
-import * as PopoverPrimitive from "@radix-ui/react-popover"
-import { cn } from "@/lib/utils"
-
+import * as React from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+import { Popover, PopoverTrigger } from "./popover";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { cn } from "@/lib/utils";
 
 function useHoverSupport() {
-    const [supportsHover, setSupportsHover] = React.useState(true)
+    const [supportsHover, setSupportsHover] = React.useState(true);
 
     React.useEffect(() => {
-        const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)")
+        const mediaQuery = window.matchMedia(
+            "(hover: hover) and (pointer: fine)"
+        );
 
         const updateHoverSupport = () => {
-            setSupportsHover(mediaQuery.matches)
-        }
+            setSupportsHover(mediaQuery.matches);
+        };
 
-        updateHoverSupport()
-        mediaQuery.addEventListener("change", updateHoverSupport)
+        updateHoverSupport();
+        mediaQuery.addEventListener("change", updateHoverSupport);
 
         return () => {
-            mediaQuery.removeEventListener("change", updateHoverSupport)
-        }
-    }, [])
+            mediaQuery.removeEventListener("change", updateHoverSupport);
+        };
+    }, []);
 
-    return supportsHover
+    return supportsHover;
 }
 
 interface ResponsiveTooltipProps {
-    children: React.ReactNode
-    content: React.ReactNode
-    side?: "top" | "right" | "bottom" | "left"
-    className?: string
-    sideOffset?: number
+    children: React.ReactNode;
+    content: React.ReactNode;
+    side?: "top" | "right" | "bottom" | "left";
+    className?: string;
+    sideOffset?: number;
 }
 
 export function ResponsiveTooltip({
@@ -43,26 +44,26 @@ export function ResponsiveTooltip({
     className,
     sideOffset = 0,
 }: ResponsiveTooltipProps) {
-    const supportsHover = useHoverSupport()
+    const supportsHover = useHoverSupport();
 
     if (supportsHover) {
         return (
             <Tooltip>
-                <TooltipTrigger asChild>
-                    {children}
-                </TooltipTrigger>
-                <TooltipContent side={side} className={className} sideOffset={sideOffset}>
+                <TooltipTrigger asChild>{children}</TooltipTrigger>
+                <TooltipContent
+                    side={side}
+                    className={className}
+                    sideOffset={sideOffset}
+                >
                     {content}
                 </TooltipContent>
             </Tooltip>
-        )
+        );
     }
 
     return (
         <Popover>
-            <PopoverTrigger asChild>
-                {children}
-            </PopoverTrigger>
+            <PopoverTrigger asChild>{children}</PopoverTrigger>
             <PopoverPrimitive.Portal>
                 <PopoverPrimitive.Content
                     data-slot="popover-content"
@@ -78,6 +79,5 @@ export function ResponsiveTooltip({
                 </PopoverPrimitive.Content>
             </PopoverPrimitive.Portal>
         </Popover>
-    )
+    );
 }
-

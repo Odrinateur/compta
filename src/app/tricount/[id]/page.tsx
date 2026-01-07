@@ -12,7 +12,11 @@ import { TrictountInteractionGridCard } from "@/app/_components/tricount/interac
 import { formatAmount } from "@/lib/utils";
 import OneAvatar from "@/app/_components/tricount/users/one-avatar";
 
-export default async function TricountPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TricountPage({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}) {
     const { id } = await params;
     const user = await getUser();
 
@@ -20,13 +24,19 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
         redirect("/tricount");
     }
 
-    const tricount = await api.tricount.getTricountById({ token: user?.token, idTri: Number(id) });
+    const tricount = await api.tricount.getTricountById({
+        token: user?.token,
+        idTri: Number(id),
+    });
 
     if (!tricount) {
         redirect("/tricount");
     }
 
-    const stats = await api.tricount.getTricountStats({ token: user?.token, idTri: Number(id) });
+    const stats = await api.tricount.getTricountStats({
+        token: user?.token,
+        idTri: Number(id),
+    });
 
     return (
         <>
@@ -44,8 +54,16 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
                     </Link>
                 </div>
                 <div className="flex justify-center items-center gap-2 mt-10 sm:mt-0">
-                    <TricountName user={user} idTri={Number(id)} initialName={tricount.name} />
-                    <EditNameButton user={user} idTri={Number(id)} currentName={tricount.name} />
+                    <TricountName
+                        user={user}
+                        idTri={Number(id)}
+                        initialName={tricount.name}
+                    />
+                    <EditNameButton
+                        user={user}
+                        idTri={Number(id)}
+                        currentName={tricount.name}
+                    />
                 </div>
                 <div className="right-0 absolute flex items-center gap-2">
                     <AddUserButton user={user} idTri={Number(id)} />
@@ -54,13 +72,22 @@ export default async function TricountPage({ params }: { params: Promise<{ id: s
             </div>
 
             <div className="flex justify-center items-center gap-4 w-full">
-                <H4>{new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}: {formatAmount(stats.totalThisMonth)}</H4>
+                <H4>
+                    {new Date().toLocaleDateString("fr-FR", {
+                        month: "long",
+                        year: "numeric",
+                    })}
+                    : {formatAmount(stats.totalThisMonth)}
+                </H4>
                 <H4>Total: {formatAmount(stats.totalAmount)}</H4>
             </div>
 
             <div className="flex flex-wrap justify-center items-center gap-4 w-full">
                 {stats.debts.map((debt, index: number) => (
-                    <div key={index} className="border border-muted rounded-lg flex justify-center items-center gap-2 p-3">
+                    <div
+                        key={index}
+                        className="border border-muted rounded-lg flex justify-center items-center gap-2 p-3"
+                    >
                         <OneAvatar user={debt.debtor} currentUser={user} />
                         <p className="font-medium">
                             {formatAmount(debt.amount)}

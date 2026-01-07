@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { loginAction } from "./login-action";
 import { MAX_FILE_SIZE, resizeImage } from "@/lib/utils";
+import Image from "next/image";
 
 export default function LoginInput() {
     const [username, setUsername] = useState("");
@@ -39,7 +40,9 @@ export default function LoginInput() {
             if (preview) {
                 URL.revokeObjectURL(preview);
             }
-            setError(`L'image est trop grande. Taille maximale: ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+            setError(
+                `L'image est trop grande. Taille maximale: ${MAX_FILE_SIZE / (1024 * 1024)}MB`
+            );
             setPicture(null);
             setPreview(null);
             if (fileInputRef.current) {
@@ -64,7 +67,11 @@ export default function LoginInput() {
             const resizedFile = await resizeImage(file);
             setPicture(resizedFile);
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Erreur lors du traitement de l'image");
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Erreur lors du traitement de l'image"
+            );
             setPicture(null);
             setPreview(null);
             if (fileInputRef.current) {
@@ -82,10 +89,15 @@ export default function LoginInput() {
             await loginAction(username, password, picture);
         } catch (err) {
             const error = err as Error & { digest?: string };
-            if (error instanceof Error && error.digest?.startsWith("NEXT_REDIRECT")) {
+            if (
+                error instanceof Error &&
+                error.digest?.startsWith("NEXT_REDIRECT")
+            ) {
                 return;
             }
-            setError(err instanceof Error ? err.message : "Une erreur est survenue");
+            setError(
+                err instanceof Error ? err.message : "Une erreur est survenue"
+            );
             setIsLoading(false);
         }
     };
@@ -123,7 +135,7 @@ export default function LoginInput() {
                 />
                 {preview && (
                     <div className="border rounded-md relative p-2 w-64 h-64 overflow-hidden">
-                        <img
+                        <Image
                             src={preview}
                             alt="Aperçu"
                             className="w-full h-full object-contain"
