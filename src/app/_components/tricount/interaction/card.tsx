@@ -53,6 +53,12 @@ function TricountInteractionCard({
                         )
                 );
             },
+            onSuccess: async () => {
+                await utils.tricount.getTricountStats.refetch({
+                    token: user.token,
+                    idTri: interaction.triId,
+                });
+            },
             onSettled: () => {
                 void utils.tricountInteraction.getInteractionsByTricount.invalidate(
                     { token: user.token, idTri: interaction.triId }

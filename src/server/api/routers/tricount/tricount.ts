@@ -4,8 +4,8 @@ import {
     publicProcedure,
     type createTRPCContext,
 } from "@/server/api/trpc";
-import { tri, tri_users, users } from "@/server/db/schema";
-import { and, eq, getTableColumns, isNull } from "drizzle-orm";
+import { tri, tri_users, users, tri_interactions } from "@/server/db/schema";
+import { and, eq, getTableColumns, isNull, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
 import { type TricountInteraction, type UserLight } from "@/server/db/types";
@@ -227,6 +227,54 @@ const tricountRouter = createTRPCRouter({
                 .update(tri)
                 .set({ name: input.name })
                 .where(eq(tri.id, input.idTri));
+        }),
+
+    markDebtAsRefunded: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+                idTri: z.number(),
+                debtorUsername: z.string(),
+                creditorUsername: z.string(),
+            })
+        )
+        .mutation(async ({ ctx, input }) => {
+            const user = await getUserIfExist(ctx, input.token);
+
+            await hasAccess(ctx, user.username, input.idTri);
+
+            // Récupérer toutes les interactions actives du tricount
+            const caller = createCaller(ctx);
+            const interactions: TricountInteraction[] =
+                await caller.tricountInteraction.getInteractionsByTricount({
+                    token: input.token,
+                    idTri: input.idTri,
+                });
+
+            // Filtrer les interactions non remboursées où le creditor est le payer
+            // et le debtor est dans les payees
+            const interactionsToRefund = interactions.filter(
+                (interaction) =>
+                    !interaction.isRefunded &&
+                    interaction.usernamePayer === input.creditorUsername &&
+                    interaction.usersPayees.some(
+                        (payee) => payee.username === input.debtorUsername
+                    )
+            );
+
+            // Marquer toutes ces interactions comme remboursées
+            if (interactionsToRefund.length > 0) {
+                const interactionIds = interactionsToRefund.map((i) => i.id);
+                await ctx.db
+                    .update(tri_interactions)
+                    .set({ isRefunded: true })
+                    .where(
+                        and(
+                            eq(tri_interactions.triId, input.idTri),
+                            inArray(tri_interactions.id, interactionIds)
+                        )
+                    );
+            }
         }),
 
     addUserToTricount: publicProcedure

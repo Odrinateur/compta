@@ -2,15 +2,14 @@ import AddUserButton from "@/app/_components/tricount/users/add-button";
 import { Avatars } from "@/app/_components/tricount/users/avatars";
 import EditNameButton from "@/app/_components/tricount/edit-name-button";
 import TricountName from "@/app/_components/tricount/name";
-import { H4, Link } from "@/app/_components/ui/typography";
+import { Link } from "@/app/_components/ui/typography";
 import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
 import { redirect } from "next/navigation";
 import { Button } from "@/app/_components/ui/button";
-import { ArrowLeftIcon, PlusIcon, ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, PlusIcon } from "lucide-react";
 import { TrictountInteractionGridCard } from "@/app/_components/tricount/interaction/card";
-import { formatAmount } from "@/lib/utils";
-import OneAvatar from "@/app/_components/tricount/users/one-avatar";
+import TricountStats from "@/app/_components/tricount/stats";
 
 export default async function TricountPage({
     params,
@@ -32,11 +31,6 @@ export default async function TricountPage({
     if (!tricount) {
         redirect("/tricount");
     }
-
-    const stats = await api.tricount.getTricountStats({
-        token: user?.token,
-        idTri: Number(id),
-    });
 
     return (
         <>
@@ -71,32 +65,7 @@ export default async function TricountPage({
                 </div>
             </div>
 
-            <div className="flex justify-center items-center gap-4 w-full">
-                <H4>
-                    {new Date().toLocaleDateString("fr-FR", {
-                        month: "long",
-                        year: "numeric",
-                    })}
-                    : {formatAmount(stats.totalThisMonth)}
-                </H4>
-                <H4>Total: {formatAmount(stats.totalAmount)}</H4>
-            </div>
-
-            <div className="flex flex-wrap justify-center items-center gap-4 w-full">
-                {stats.debts.map((debt, index: number) => (
-                    <div
-                        key={index}
-                        className="border border-muted rounded-lg flex justify-center items-center gap-2 p-3"
-                    >
-                        <OneAvatar user={debt.debtor} currentUser={user} />
-                        <p className="font-medium">
-                            {formatAmount(debt.amount)}
-                        </p>
-                        <ArrowRightIcon className="size-4" />
-                        <OneAvatar user={debt.creditor} currentUser={user} />
-                    </div>
-                ))}
-            </div>
+            <TricountStats user={user} idTri={Number(id)} />
 
             <TrictountInteractionGridCard user={user} idTri={Number(id)} />
         </>
