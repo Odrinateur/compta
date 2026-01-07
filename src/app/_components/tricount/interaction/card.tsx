@@ -16,6 +16,7 @@ import OneAvatar from "../users/one-avatar";
 import { AvatarsWithInteraction } from "../users/avatars";
 import { Badge } from "../../ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
+import { useRouter } from "next/navigation";
 
 interface TricountInteractionCardProps {
     interaction: TricountInteraction;
@@ -23,6 +24,7 @@ interface TricountInteractionCardProps {
 }
 
 function TricountInteractionCard({ interaction, user }: TricountInteractionCardProps) {
+    const router = useRouter();
     const utils = api.useUtils();
     const setInteractionRefundedMutation = api.tricountInteraction.setInteractionRefunded.useMutation({
         onMutate: async (variables) => {
@@ -40,8 +42,21 @@ function TricountInteractionCard({ interaction, user }: TricountInteractionCardP
         },
     });
 
+    const handleCardClick = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('[role="checkbox"]')) {
+            return;
+        }
+        router.push(
+            `/tricount/${interaction.triId}/interaction/${interaction.id}/edit`,
+        );
+    };
+
     return (
-        <Card className="flex sm:flex-row flex-col justify-between items-start sm:items-center gap-3 px-4 py-3" style={interaction.isRefunded ? { opacity: 0.6 } : undefined}>
+        <Card
+            className="hover:bg-muted/50 flex sm:flex-row flex-col justify-between items-start sm:items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
+            style={interaction.isRefunded ? { opacity: 0.6 } : undefined}
+            onClick={handleCardClick}
+        >
             <div className="flex justify-between items-center gap-2 w-full">
                 <div className="flex justify-between items-center gap-2">
                     <Checkbox

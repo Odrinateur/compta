@@ -157,18 +157,87 @@ const tricountInteractionRouter = createTRPCRouter({
         await ctx.db.delete(tri_interactions).where(and(eq(tri_interactions.id, input.idInteraction), eq(tri_interactions.triId, input.idTri)));
     }),
 
-    setInteractionRefunded: publicProcedure.input(z.object({
-        token: z.string(),
-        idTri: z.number(),
-        idInteraction: z.number(),
-        isRefunded: z.boolean(),
-    })).mutation(async ({ ctx, input }) => {
-        const user = await getUserIfExist(ctx, input.token);
+    setInteractionRefunded: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+                idTri: z.number(),
+                idInteraction: z.number(),
+                isRefunded: z.boolean(),
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const user = await getUserIfExist(ctx, input.token);
 
-        await hasAccess(ctx, user.username, input.idTri);
+            await hasAccess(ctx, user.username, input.idTri);
 
-        await ctx.db.update(tri_interactions).set({ isRefunded: input.isRefunded }).where(and(eq(tri_interactions.id, input.idInteraction), eq(tri_interactions.triId, input.idTri)));
-    }),
+            await ctx.db
+                .update(tri_interactions)
+                .set({ isRefunded: input.isRefunded })
+                .where(
+                    and(
+                        eq(tri_interactions.id, input.idInteraction),
+                        eq(tri_interactions.triId, input.idTri),
+                    ),
+                );
+        }),
+
+    updateInteraction: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+                idTri: z.number(),
+                idInteraction: z.number(),
+                name: z.string(),
+                amount: z.number(),
+                categoryId: z.number(),
+                usernamePayer: z.string(),
+                isRefunded: z.boolean(),
+                usersPayees: z.array(
+                    z.object({
+                        username: z.string(),
+                    }),
+                ),
+                date: z.string(),
+            }),
+        )
+        .mutation(async ({ ctx, input }) => {
+            const user = await getUserIfExist(ctx, input.token);
+
+            await hasAccess(ctx, user.username, input.idTri);
+
+            const amountInCents = Math.round(input.amount * 100);
+
+            await ctx.db
+                .update(tri_interactions)
+                .set({
+                    name: input.name,
+                    amount: amountInCents,
+                    categoryId: input.categoryId,
+                    usernamePayer: input.usernamePayer,
+                    isRefunded: input.isRefunded,
+                    date: input.date,
+                })
+                .where(
+                    and(
+                        eq(tri_interactions.id, input.idInteraction),
+                        eq(tri_interactions.triId, input.idTri),
+                    ),
+                );
+
+            // Supprimer les anciens payees et les recréer
+            await ctx.db
+                .delete(tri_users_payees)
+                .where(eq(tri_users_payees.idInteraction, input.idInteraction));
+
+            for (const userPayee of input.usersPayees) {
+                await ctx.db.insert(tri_users_payees).values({
+                    idInteraction: input.idInteraction,
+                    usernamePayee: userPayee.username,
+                    amount: Math.round(amountInCents / input.usersPayees.length),
+                });
+            }
+        }),
 });
 
 export default tricountInteractionRouter;

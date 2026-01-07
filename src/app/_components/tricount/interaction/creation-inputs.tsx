@@ -12,24 +12,32 @@ import { Card, CardContent, CardFooter } from "../../ui/card";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Skeleton } from "../../ui/skeleton";
 import MultipleSelector, { type Option } from "../../ui/multi-select";
-import { type MeUser } from "@/server/db/types";
+import { type MeUser, type TricountInteraction } from "@/server/db/types";
 import Link from "next/link";
 
-interface TricountInteractionCreationInputProps {
+interface TricountInteractionFormProps {
     user: MeUser;
     idTri: number;
+    interaction?: TricountInteraction;
 }
 
-function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionCreationInputProps) {
+function TricountInteractionForm({ user, idTri, interaction }: TricountInteractionFormProps) {
     const router = useRouter();
-    const [name, setName] = useState("");
+    const isEditMode = !!interaction;
+
+    const [name, setName] = useState(interaction?.name ?? "");
     const [amount, setAmount] = useState<number>(0);
     const [categoryId, setCategoryId] = useState<number>(0);
-    const [isRefunded] = useState<boolean>(false);
+    const [isRefunded] = useState<boolean>(interaction?.isRefunded ?? false);
     const [usernamePayer, setUsernamePayer] = useState<string>("");
-    const [date, setDate] = useState<Date>(new Date());
-    const [usersPayees, setUsersPayees] = useState<Option[]>([]);
-    const defaultsSetRef = useRef(false);
+    const [date, setDate] = useState<Date>(interaction ? new Date(interaction.date) : new Date());
+    const [usersPayees, setUsersPayees] = useState<Option[]>(
+        interaction?.usersPayees.map((p) => ({
+            label: p.username,
+            value: p.username,
+        })) ?? [],
+    );
+    const defaultsSetRef = useRef(isEditMode);
 
     const categories = api.tricountInteraction.getCategoriesByTricount.useQuery({ token: user.token, idTri });
     const usersInTricount = api.tricount.getUsersInTricount.useQuery({ token: user.token, idTri });
@@ -51,12 +59,31 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
     }, [usersInTricount.data, user.username]);
 
     const utils = api.useUtils();
-    const addInteractionMutation = api.tricountInteraction.createInteraction.useMutation({
-        onSuccess: async () => {
-            await utils.tricountInteraction.getInteractionsByTricount.invalidate({ token: user.token, idTri });
-            router.push(`/tricount/${idTri}`);
-        }
-    });
+
+    const addInteractionMutation =
+        api.tricountInteraction.createInteraction.useMutation({
+            onSuccess: async () => {
+                await utils.tricountInteraction.getInteractionsByTricount.invalidate({
+                    token: user.token,
+                    idTri,
+                });
+                router.push(`/tricount/${idTri}`);
+            },
+        });
+
+    const updateInteractionMutation =
+        api.tricountInteraction.updateInteraction.useMutation({
+            onSuccess: async () => {
+                await utils.tricountInteraction.getInteractionsByTricount.invalidate({
+                    token: user.token,
+                    idTri,
+                });
+                router.push(`/tricount/${idTri}`);
+            },
+        });
+
+    const isPending =
+        addInteractionMutation.isPending || updateInteractionMutation.isPending;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,7 +101,7 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
             return;
         }
 
-        await addInteractionMutation.mutateAsync({
+        const payload = {
             token: user.token,
             idTri,
             name,
@@ -86,7 +113,16 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                 username: user.value,
             })),
             date: date.toISOString(),
-        });
+        };
+
+        if (isEditMode && interaction) {
+            await updateInteractionMutation.mutateAsync({
+                ...payload,
+                idInteraction: interaction.id,
+            });
+        } else {
+            await addInteractionMutation.mutateAsync(payload);
+        }
     };
 
     return (
@@ -98,7 +134,9 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                             <ArrowLeft />
                         </Button>
                     </Link>
-                    <h1 className="font-semibold text-2xl tracking-tight">Nouvelle interaction</h1>
+                    <h1 className="font-semibold text-2xl tracking-tight">
+                        {isEditMode ? "Modifier l'interaction" : "Nouvelle interaction"}
+                    </h1>
                 </div>
 
                 <Card className="shadow-lg">
@@ -216,10 +254,10 @@ function TricountInteractionCreationInputs({ user, idTri }: TricountInteractionC
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={addInteractionMutation.isPending || !name || !categoryId || !amount || !usernamePayer}
+                                disabled={isPending || !name || !categoryId || !amount || !usernamePayer}
                                 className="min-w-[140px]"
                             >
-                                {addInteractionMutation.isPending ? (
+                                {isPending ? (
                                     <>
                                         <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                                         Création...
@@ -277,6 +315,6 @@ function TricountInteractionCreationInputsSkeleton() {
                 </Card>
             </div>
         </div>
-    )
+    );
 }
-export { TricountInteractionCreationInputs, TricountInteractionCreationInputsSkeleton };
+export { TricountInteractionForm, TricountInteractionCreationInputsSkeleton };

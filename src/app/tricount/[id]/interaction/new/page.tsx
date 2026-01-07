@@ -1,4 +1,4 @@
-import { TricountInteractionCreationInputs } from "@/app/_components/tricount/interaction/creation-inputs";
+import { TricountInteractionForm } from "@/app/_components/tricount/interaction/creation-inputs";
 import { getUser } from "@/lib/get-user";
 import { redirect } from "next/navigation";
 
@@ -12,7 +12,7 @@ export default async function NewInteractionPage({ params }: { params: Promise<{
 
     return (
         <>
-            <TricountInteractionCreationInputs user={user} idTri={Number(id)} />
+            <TricountInteractionForm user={user} idTri={Number(id)} />
         </>
     );
 }
