@@ -36,7 +36,9 @@ function TricountInteractionForm({
     const isEditMode = !!interaction;
 
     const [name, setName] = useState(interaction?.name ?? "");
-    const [amount, setAmount] = useState<number>(interaction?.amount ?? 0);
+    const [amount, setAmount] = useState<number>(
+        interaction ? (interaction.amount ?? 0) / 100 : 0
+    );
     const [categoryId, setCategoryId] = useState<number>(
         interaction?.categoryId ?? 0
     );
