@@ -81,7 +81,7 @@ function TricountInteractionCard({
             style={interaction.isRefunded ? { opacity: 0.6 } : undefined}
             onClick={handleCardClick}
         >
-            <div className="flex justify-between items-center gap-2 w-full">
+            <div className="flex flex-wrap justify-between items-center gap-2 w-full">
                 <div className="flex justify-between items-center gap-2">
                     <Checkbox
                         checked={interaction.isRefunded}
