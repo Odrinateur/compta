@@ -26,8 +26,15 @@ export async function loginAction(
             throw error;
         }
 
+        const cookieOptions = {
+            maxAge: 60 * 60 * 24 * 365, // 1 an
+            path: "/",
+            sameSite: "lax" as const,
+            secure: process.env.NODE_ENV === "production",
+        };
+
         if (user) {
-            cookiesStore.set("token", user.token);
+            cookiesStore.set("token", user.token, cookieOptions);
         } else {
             let pictureBase64: string | undefined = undefined;
             if (picture) {
@@ -49,7 +56,7 @@ export async function loginAction(
                 }
                 throw error;
             }
-            cookiesStore.set("token", result.token);
+            cookiesStore.set("token", result.token, cookieOptions);
         }
 
         redirect("/");

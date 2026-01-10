@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
         short_name: "Compta",
         description: "Application de comptabilité",
         start_url: startUrl,
+        scope: "/",
         display: "standalone",
         background_color: "#ffffff",
         theme_color: "#000000",
