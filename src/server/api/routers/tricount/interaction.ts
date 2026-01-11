@@ -96,21 +96,6 @@ const tricountInteractionRouter = createTRPCRouter({
             }));
         }),
 
-    getCategoriesByTricount: publicProcedure
-        .input(
-            z.object({
-                token: z.string(),
-                idTri: z.number(),
-            })
-        )
-        .query(async ({ ctx, input }) => {
-            const user = await getUserIfExist(ctx, input.token);
-
-            await hasAccess(ctx, user.username, input.idTri);
-
-            return await ctx.db.select().from(tri_categories);
-        }),
-
     createInteraction: publicProcedure
         .input(
             z.object({

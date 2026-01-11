@@ -57,13 +57,19 @@ function TricountInteractionForm({
     );
     const defaultsSetRef = useRef(isEditMode);
 
-    const categories = api.tricountInteraction.getCategoriesByTricount.useQuery(
-        { token: user.token, idTri }
-    );
+    const categories = api.tricountCategory.getCategoriesByTricount.useQuery({
+        token: user.token,
+        idTri,
+    });
     const usersInTricount = api.tricount.getUsersInTricount.useQuery({
         token: user.token,
         idTri,
     });
+    const categoriesRegexes =
+        api.tricountCategory.getCategoriesRegexes.useQuery({
+            token: user.token,
+            idTri,
+        });
 
     useEffect(() => {
         if (
@@ -115,6 +121,19 @@ function TricountInteractionForm({
                 router.push(`/tricount/${idTri}`);
             },
         });
+
+    const handleEditName = (name: string) => {
+        const categoryRegex = categoriesRegexes.data?.find((c) =>
+            c.regexes.find((r) =>
+                name.toLowerCase().includes(r.regex.toLowerCase())
+            )
+        );
+        if (categoryRegex) {
+            setCategoryId(categoryRegex.id);
+        }
+
+        setName(name);
+    };
 
     const isPending =
         addInteractionMutation.isPending || updateInteractionMutation.isPending;
@@ -190,7 +209,9 @@ function TricountInteractionForm({
                                     type="text"
                                     placeholder="Ex: Restaurant, Courses..."
                                     value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    onChange={(e) =>
+                                        handleEditName(e.target.value)
+                                    }
                                     className="h-10"
                                     required
                                     autoFocus

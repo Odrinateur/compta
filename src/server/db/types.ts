@@ -10,10 +10,7 @@ interface Tricount {
 }
 
 interface TricountInteraction {
-    category: {
-        id: number;
-        name: string;
-    };
+    category: TricountCategory;
     id: number;
     name: string;
     amount: number;
@@ -23,6 +20,18 @@ interface TricountInteraction {
     usernamePayer: string;
     date: string;
     usersPayees: TricountPayeeLight[];
+}
+
+interface TricountCategory {
+    id: number;
+    name: string;
+}
+
+interface TricountCategoryRegex extends TricountCategory {
+    regexes: {
+        id: number;
+        regex: string;
+    }[];
 }
 
 interface MeUser {
@@ -60,4 +69,6 @@ export type {
     MeUser,
     User,
     UserLight,
+    TricountCategory,
+    TricountCategoryRegex,
 };

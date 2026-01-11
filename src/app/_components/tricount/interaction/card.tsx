@@ -159,7 +159,7 @@ function TrictountInteractionGridCard({
             idTri,
         });
     const { data: categories } =
-        api.tricountInteraction.getCategoriesByTricount.useQuery({
+        api.tricountCategory.getCategoriesByTricount.useQuery({
             token: user.token,
             idTri,
         });

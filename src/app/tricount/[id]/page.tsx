@@ -7,7 +7,7 @@ import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
 import { redirect } from "next/navigation";
 import { Button } from "@/app/_components/ui/button";
-import { ArrowLeftIcon, PlusIcon } from "lucide-react";
+import { ArrowLeftIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { TrictountInteractionGridCard } from "@/app/_components/tricount/interaction/card";
 import TricountStats from "@/app/_components/tricount/stats";
 
@@ -39,6 +39,11 @@ export default async function TricountPage({
                     <Link href="/tricount">
                         <Button size="icon">
                             <ArrowLeftIcon />
+                        </Button>
+                    </Link>
+                    <Link href={`/tricount/${id}/settings`}>
+                        <Button size="icon">
+                            <SettingsIcon />
                         </Button>
                     </Link>
                     <Link href={`/tricount/${id}/interaction/new`}>

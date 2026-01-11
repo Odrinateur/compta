@@ -155,6 +155,22 @@ export const tri_categories = createTable(
     (t) => [index("tri_categories_name_idx").on(t.name)]
 );
 
+export const tri_categories_regex = createTable(
+    "tri_categories_regex",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        regex: d.text("regex").notNull(),
+        categoryId: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => tri_categories.id),
+    }),
+    (t) => [
+        index("tri_categories_regex_category_id_idx").on(t.categoryId),
+        index("tri_categories_regex_regex_idx").on(t.regex),
+    ]
+);
+
 export const tri_interactions = createTable(
     "tri_interactions",
     (d) => ({
