@@ -1,9 +1,10 @@
 import userRouter from "@/server/api/routers/user";
-import monthRouter from "@/server/api/routers/count/month";
 import tricountRouter from "@/server/api/routers/tricount/tricount";
 import tricountInteractionRouter from "@/server/api/routers/tricount/interaction";
 import tricountCategoryRouter from "@/server/api/routers/tricount/category";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import countMonthRouter from "./routers/count/month";
+import countInteractionRouter from "./routers/count/interaction";
 
 /**
  * This is the primary router for your server.
@@ -12,11 +13,13 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
     user: userRouter,
-    month: monthRouter,
 
     tricount: tricountRouter,
     tricountInteraction: tricountInteractionRouter,
     tricountCategory: tricountCategoryRouter,
+
+    countMonth: countMonthRouter,
+    countInteraction: countInteractionRouter,
 });
 
 // export type definition of API

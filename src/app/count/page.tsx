@@ -1,42 +1,42 @@
 import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
-import { Button } from "../_components/ui/button";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { H3 } from "../_components/ui/typography";
-import { InteractionCreationInput } from "../_components/count/month/interaction-creation-input";
+import { InteractionCreationInput } from "../_components/count/month/interaction/creation-input";
+import { MonthNavigation } from "../_components/count/month/navigation";
+import { InteractionCardGrid } from "../_components/count/month/interaction/card";
+import { TotalAmount } from "../_components/count/month/total-amount";
 
-export default async function CountPage() {
+interface CountPageProps {
+    searchParams: Promise<{ monthId?: string }>;
+}
+
+export default async function CountPage({ searchParams }: CountPageProps) {
+    const { monthId } = await searchParams;
     const user = await getUser();
-    const currentMonth = await api.month.getCurrentMonth({
+    const currentMonth = await api.countMonth.getCurrentMonth({
         token: user?.token,
+        monthId: monthId ? parseInt(monthId, 10) : undefined,
     });
 
     return (
         <>
-            <section className="flex w-full justify-center gap-4">
-                {currentMonth.previousMonthId && (
-                    <Button variant="outline" size="icon">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                )}
-                <H3>
-                    {currentMonth.month.month} - {currentMonth.month.year}
-                </H3>
-                {currentMonth.nextMonthId && (
-                    <Button variant="outline" size="icon">
-                        <ArrowRight className="h-4 w-4" />
-                    </Button>
-                )}
-            </section>
+            <MonthNavigation
+                month={currentMonth.month.month}
+                year={currentMonth.month.year}
+                previousMonthId={
+                    currentMonth.previousMonthId?.toString() ?? null
+                }
+                nextMonthId={currentMonth.nextMonthId?.toString() ?? null}
+                user={user}
+            />
+
+            <TotalAmount user={user} monthId={currentMonth.month.id} />
 
             <InteractionCreationInput
-                categories={currentMonth.interactions
-                    .map((interaction) => interaction.category)
-                    .filter(
-                        (category): category is NonNullable<typeof category> =>
-                            category !== null
-                    )}
+                user={user}
+                monthId={currentMonth.month.id}
             />
+
+            <InteractionCardGrid user={user} monthId={currentMonth.month.id} />
         </>
     );
 }

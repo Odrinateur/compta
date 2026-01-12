@@ -6,6 +6,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatAmount(amount: number): string {
+    if (amount % 100 === 0) {
+        return new Intl.NumberFormat("fr-FR", {
+            style: "currency",
+            currency: "EUR",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount / 100);
+    }
+
     return new Intl.NumberFormat("fr-FR", {
         style: "currency",
         currency: "EUR",

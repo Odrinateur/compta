@@ -1,0 +1,1 @@
+ALTER TABLE `compta_count_interactions` ADD `date` text DEFAULT (current_timestamp) NOT NULL;

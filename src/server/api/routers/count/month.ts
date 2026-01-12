@@ -10,28 +10,42 @@ import {
     countInteractions,
     countMonths,
 } from "@/server/db/schema";
-import { eq, and, getTableColumns } from "drizzle-orm";
+import { eq, and, getTableColumns, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getUserIfExist } from "../user";
 
-const monthRouter = createTRPCRouter({
+const countMonthRouter = createTRPCRouter({
     getCurrentMonth: publicProcedure
         .input(
             z.object({
                 token: z.string(),
+                monthId: z.number().optional(),
             })
         )
         .query(async ({ ctx, input }) => {
             const user = await getUserIfExist(ctx, input.token);
 
-            const date = new Date();
-            const month = await getMonthByDate(ctx, user.username, date);
+            let month;
+            if (input.monthId) {
+                const result = await ctx.db
+                    .select()
+                    .from(countMonths)
+                    .where(eq(countMonths.id, input.monthId));
 
-            const lastMonthDate = new Date(
-                date.getFullYear(),
-                date.getMonth() - 1,
-                1
-            );
+                if (!result || result.length === 0) {
+                    throw new TRPCError({
+                        code: "NOT_FOUND",
+                        message: "Month not found",
+                    });
+                }
+
+                month = result[0]!;
+            } else {
+                const date = new Date();
+                month = await getMonthByDate(ctx, user.username, date);
+            }
+
+            const lastMonthDate = new Date(month.year, month.month - 2, 1);
             const previousMonth = await getMonthByDate(
                 ctx,
                 user.username,
@@ -39,11 +53,7 @@ const monthRouter = createTRPCRouter({
                 false
             );
 
-            const nextMonthDate = new Date(
-                date.getFullYear(),
-                date.getMonth() + 1,
-                1
-            );
+            const nextMonthDate = new Date(month.year, month.month, 1);
             const nextMonth = await getMonthByDate(
                 ctx,
                 user.username,
@@ -51,29 +61,48 @@ const monthRouter = createTRPCRouter({
                 false
             );
 
-            const monthInteractions = await ctx.db
-                .select({
-                    ...getTableColumns(countInteractions),
-                    category: getTableColumns(countCategories),
-                })
-                .from(countInteractions)
-                .leftJoin(
-                    countCategories,
-                    eq(countInteractions.categoryId, countCategories.id)
-                )
-                .where(
-                    and(
-                        eq(countInteractions.monthId, month.id),
-                        eq(countInteractions.username, user.username)
-                    )
-                );
-
             return {
                 month: month,
                 previousMonthId: previousMonth?.id ?? null,
                 nextMonthId: nextMonth?.id ?? null,
-                interactions: monthInteractions,
             };
+        }),
+
+    getTotalAmount: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+                monthId: z.number(),
+            })
+        )
+        .query(async ({ ctx, input }) => {
+            await getUserIfExist(ctx, input.token);
+
+            const result = await ctx.db
+                .select({
+                    totalAmount: sql<number>`COALESCE(SUM(${countInteractions.amount}), 0)`,
+                })
+                .from(countInteractions)
+                .where(eq(countInteractions.monthId, input.monthId));
+
+            return result[0]?.totalAmount ?? 0;
+        }),
+
+    createMonth: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+                username: z.string(),
+                year: z.number(),
+                month: z.number(),
+            })
+        )
+        .mutation(async ({ ctx, input }) => {
+            await getUserIfExist(ctx, input.token);
+
+            const date = new Date(input.year, input.month - 1, 1);
+
+            return await getMonthByDate(ctx, input.username, date);
         }),
 
     getCategories: publicProcedure
@@ -174,4 +203,4 @@ const createNewMonth = async (
     return month[0]!;
 };
 
-export default monthRouter;
+export default countMonthRouter;

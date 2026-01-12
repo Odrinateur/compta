@@ -1,9 +1,3 @@
-interface Category {
-    id: number;
-    name: string;
-    default: boolean;
-}
-
 interface Tricount {
     id: number;
     name: string;
@@ -60,8 +54,21 @@ interface TricountPayeeLight {
     amount: number;
 }
 
+interface CountCategory {
+    id: number;
+    name: string;
+}
+
+interface CountInteraction {
+    id: number;
+    name: string;
+    amount: number;
+    category: CountCategory;
+    categoryId: number;
+    monthId: number;
+}
+
 export type {
-    Category,
     Tricount,
     TricountInteraction,
     TricountPayeeLight,
@@ -71,4 +78,5 @@ export type {
     UserLight,
     TricountCategory,
     TricountCategoryRegex,
+    CountInteraction,
 };

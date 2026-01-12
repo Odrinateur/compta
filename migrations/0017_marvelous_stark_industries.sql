@@ -1,0 +1,1 @@
+ALTER TABLE `compta_count_months` DROP COLUMN `totalAmount`;

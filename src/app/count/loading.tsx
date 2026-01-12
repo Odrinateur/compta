@@ -1,5 +1,5 @@
 import { Skeleton } from "@/app/_components/ui/skeleton";
-import { InteractionCreationInputSkeleton } from "../_components/count/month/interaction-creation-input";
+import { InteractionCreationInputSkeleton } from "../_components/count/month/interaction/creation-input";
 
 export default function Loading() {
     return (
