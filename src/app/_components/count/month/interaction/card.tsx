@@ -1,8 +1,8 @@
 "use client";
 
-import { type MeUser } from "@/server/db/types";
+import { type CountInteraction, type MeUser } from "@/server/db/types";
 import { Skeleton } from "@/app/_components/ui/skeleton";
-import { BookmarkPlus, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { BookmarkPlus, Sparkles } from "lucide-react";
 import { api } from "@/trpc/react";
 import { formatAmount } from "@/lib/utils";
 import { Badge } from "@/app/_components/ui/badge";
@@ -20,6 +20,8 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/app/_components/ui/tooltip";
+import { EditInteractionButton } from "./edit-button";
+import { DeleteInteractionButton } from "./delete-button";
 
 interface InteractionTableProps {
     user: MeUser;
@@ -27,53 +29,58 @@ interface InteractionTableProps {
 }
 
 function InteractionTable({ user, monthId }: InteractionTableProps) {
-    const { data: interactions, isLoading } =
+    const { data: interactions, isLoading: isLoadingInteractions } =
         api.countInteraction.getMonthInteractions.useQuery({
             token: user.token,
             monthId: monthId,
             username: user.username,
+            default: false,
         });
 
+    const {
+        data: defaultInteractions,
+        isLoading: isLoadingDefaultInteractions,
+    } = api.countInteraction.getMonthInteractions.useQuery({
+        token: user.token,
+        monthId: monthId,
+        username: user.username,
+        default: true,
+    });
+
+    const utils = api.useUtils();
+    const addToDefaultInteractionsMutation =
+        api.countInteraction.createInteraction.useMutation({
+            onSuccess: async () => {
+                await utils.countInteraction.getMonthInteractions.invalidate({
+                    token: user.token,
+                    monthId: monthId,
+                    username: user.username,
+                });
+
+                await utils.countMonth.getTotalAmount.invalidate({
+                    token: user.token,
+                    monthId: monthId,
+                });
+            },
+        });
+
+    const isLoading = isLoadingInteractions || isLoadingDefaultInteractions;
     if (isLoading) {
         return <InteractionTableSkeleton />;
     }
 
-    const defaultInteractions = interactions?.filter(
-        (interaction) => interaction.isDefault
-    );
-    const customInteractions = interactions?.filter(
-        (interaction) => !interaction.isDefault
-    );
-
-    const utils = api.useUtils();
-    const updateInteractionMutation =
-        api.countInteraction.updateInteraction.useMutation({
-            onSuccess: async () => {
-                await utils.countInteraction.getMonthInteractions.invalidate({
-                    token: user.token,
-                    monthId: monthId,
-                    username: user.username,
-                });
-                await utils.countMonth.getTotalAmount.invalidate({
-                    token: user.token,
-                    monthId: monthId,
-                });
-            },
+    const handleAddToDefaultInteractions = (interaction: CountInteraction) => {
+        addToDefaultInteractionsMutation.mutate({
+            token: user.token,
+            monthId: monthId,
+            username: user.username,
+            name: interaction.name,
+            categoryId: interaction.categoryId,
+            amount: interaction.amount / 100,
+            isDefault: true,
+            oldInteractionId: interaction.id,
         });
-    const removeInteractionMutation =
-        api.countInteraction.removeInteraction.useMutation({
-            onSuccess: async () => {
-                await utils.countInteraction.getMonthInteractions.invalidate({
-                    token: user.token,
-                    monthId: monthId,
-                    username: user.username,
-                });
-                await utils.countMonth.getTotalAmount.invalidate({
-                    token: user.token,
-                    monthId: monthId,
-                });
-            },
-        });
+    };
 
     const renderTableHeader = () => (
         <TableHeader>
@@ -95,7 +102,7 @@ function InteractionTable({ user, monthId }: InteractionTableProps) {
     );
 
     const renderTableRow = (
-        interaction: NonNullable<typeof interactions>[number],
+        interaction: CountInteraction,
         isDefault: boolean
     ) => (
         <TableRow key={interaction.id} className="cursor-pointer">
@@ -109,30 +116,26 @@ function InteractionTable({ user, monthId }: InteractionTableProps) {
                 </Badge>
             </TableCell>
             <TableCell className="flex justify-center">
-                <Tooltip>
-                    <TooltipTrigger>
-                        <Button variant="ghost">
-                            <Pencil />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Modifier la dépense</p>
-                    </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger>
-                        <Button variant="ghost">
-                            <Trash2 />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Supprimer la dépense</p>
-                    </TooltipContent>
-                </Tooltip>
+                <EditInteractionButton
+                    user={user}
+                    monthId={monthId}
+                    interactionId={interaction.id}
+                />
+                <DeleteInteractionButton
+                    user={user}
+                    monthId={monthId}
+                    interactionId={interaction.id}
+                    interactionName={interaction.name}
+                />
                 {!isDefault && (
                     <Tooltip>
-                        <TooltipTrigger>
-                            <Button variant="ghost">
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                onClick={() =>
+                                    handleAddToDefaultInteractions(interaction)
+                                }
+                            >
                                 <BookmarkPlus />
                             </Button>
                         </TooltipTrigger>
@@ -145,59 +148,98 @@ function InteractionTable({ user, monthId }: InteractionTableProps) {
         </TableRow>
     );
 
+    const hasInteractions = Boolean(interactions && interactions.length > 0);
+    const hasDefaultInteractions = Boolean(
+        defaultInteractions && defaultInteractions.length > 0
+    );
+    const hasAnyInteractions = hasInteractions || hasDefaultInteractions;
+
     return (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-            {interactions && interactions.length > 0 ? (
+        <div className="flex flex-col gap-4 mx-auto w-full max-w-3xl">
+            {hasAnyInteractions ? (
                 <div className="flex flex-col gap-4">
-                    {defaultInteractions && defaultInteractions.length > 0 ? (
+                    {hasDefaultInteractions ? (
                         <>
-                            <div className="rounded-md border">
+                            {defaultInteractions && (
+                                <div className="border rounded-md">
+                                    <Table className="table-fixed">
+                                        {renderTableHeader()}
+                                        <TableBody>
+                                            {defaultInteractions.map(
+                                                (interaction) =>
+                                                    renderTableRow(
+                                                        interaction as CountInteraction,
+                                                        true
+                                                    )
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                            {hasInteractions && interactions ? (
+                                <div className="border rounded-md">
+                                    <Table className="table-fixed">
+                                        <TableBody>
+                                            {interactions.map((interaction) =>
+                                                renderTableRow(
+                                                    interaction as CountInteraction,
+                                                    false
+                                                )
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            ) : (
+                                <div className="border rounded-md">
+                                    <Table className="table-fixed">
+                                        <TableHeader className="[&_tr]:border-b-0">
+                                            <TableRow>
+                                                <TableHead className="w-full text-center">
+                                                    <p>
+                                                        Aucune dépenses autres
+                                                        que celles par défaut
+                                                    </p>
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                    </Table>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <div className="border rounded-md">
+                                <Table className="table-fixed">
+                                    <TableHeader className="[&_tr]:border-b-0">
+                                        <TableRow>
+                                            <TableHead className="w-full text-center">
+                                                <p>
+                                                    Aucune dépenses par défaut
+                                                </p>
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                </Table>
+                            </div>
+                            <div className="border rounded-md">
                                 <Table className="table-fixed">
                                     {renderTableHeader()}
                                     <TableBody>
-                                        {defaultInteractions.map(
-                                            (interaction) =>
-                                                renderTableRow(
-                                                    interaction,
-                                                    true
-                                                )
+                                        {interactions?.map((interaction) =>
+                                            renderTableRow(
+                                                interaction as CountInteraction,
+                                                false
+                                            )
                                         )}
                                     </TableBody>
                                 </Table>
                             </div>
-                            {customInteractions &&
-                                customInteractions.length > 0 && (
-                                    <div className="rounded-md border">
-                                        <Table className="table-fixed">
-                                            <TableBody>
-                                                {customInteractions.map(
-                                                    (interaction) =>
-                                                        renderTableRow(
-                                                            interaction,
-                                                            false
-                                                        )
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
-                                )}
                         </>
-                    ) : (
-                        <div className="rounded-md border">
-                            <Table className="table-fixed">
-                                {renderTableHeader()}
-                                <TableBody>
-                                    {customInteractions?.map((interaction) =>
-                                        renderTableRow(interaction, false)
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Sparkles className="text-muted-foreground/30 mb-4 h-10 w-10" />
+                <div className="flex flex-col justify-center items-center py-12 text-center">
+                    <Sparkles className="mb-4 w-10 h-10 text-muted-foreground/30" />
                     <p className="text-muted-foreground text-sm">
                         {interactions?.length === 0
                             ? "Aucune dépense pour le moment"
@@ -211,12 +253,12 @@ function InteractionTable({ user, monthId }: InteractionTableProps) {
 
 function InteractionTableSkeleton() {
     return (
-        <div className="flex w-full flex-col gap-4">
-            <div className="flex w-full flex-wrap gap-2">
-                <Skeleton className="h-9 min-w-[200px] flex-1" />
-                <Skeleton className="h-9 w-[180px]" />
+        <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-wrap gap-2 w-full">
+                <Skeleton className="flex-1 min-w-[200px] h-9" />
+                <Skeleton className="w-[180px] h-9" />
             </div>
-            <div className="rounded-md border">
+            <div className="border rounded-md">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -235,19 +277,19 @@ function InteractionTableSkeleton() {
                         {Array.from({ length: 5 }).map((_, index) => (
                             <TableRow key={index}>
                                 <TableCell>
-                                    <Skeleton className="h-4 w-16" />
+                                    <Skeleton className="w-16 h-4" />
                                 </TableCell>
                                 <TableCell>
-                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="w-32 h-4" />
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
-                                    <Skeleton className="h-5 w-20" />
+                                    <Skeleton className="w-20 h-5" />
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Skeleton className="ml-auto h-4 w-16" />
+                                    <Skeleton className="ml-auto w-16 h-4" />
                                 </TableCell>
                                 <TableCell>
-                                    <Skeleton className="h-4 w-16" />
+                                    <Skeleton className="w-16 h-4" />
                                 </TableCell>
                             </TableRow>
                         ))}

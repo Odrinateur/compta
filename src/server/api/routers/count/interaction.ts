@@ -1,10 +1,6 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import {
-    countCategories,
-    countEveryMonthInteractions,
-    countInteractions,
-} from "@/server/db/schema";
+import { countCategories, countInteractions } from "@/server/db/schema";
 import { eq, and, getTableColumns } from "drizzle-orm";
 import { getUserIfExist } from "../user";
 
@@ -15,6 +11,7 @@ const interactionRouter = createTRPCRouter({
                 token: z.string(),
                 monthId: z.number(),
                 username: z.string(),
+                default: z.boolean().optional(),
             })
         )
         .query(async ({ ctx, input }) => {
@@ -24,24 +21,17 @@ const interactionRouter = createTRPCRouter({
                 .select({
                     ...getTableColumns(countInteractions),
                     category: getTableColumns(countCategories),
-                    isDefault: countEveryMonthInteractions.isActive,
                 })
                 .from(countInteractions)
                 .leftJoin(
                     countCategories,
                     eq(countInteractions.categoryId, countCategories.id)
                 )
-                .leftJoin(
-                    countEveryMonthInteractions,
-                    eq(
-                        countInteractions.id,
-                        countEveryMonthInteractions.idInteraction
-                    )
-                )
                 .where(
                     and(
                         eq(countInteractions.monthId, input.monthId),
-                        eq(countInteractions.username, input.username)
+                        eq(countInteractions.username, input.username),
+                        eq(countInteractions.isDefault, input.default ?? false)
                     )
                 );
         }),
@@ -67,10 +57,34 @@ const interactionRouter = createTRPCRouter({
                 name: z.string(),
                 categoryId: z.number(),
                 amount: z.number(),
+                isDefault: z.boolean().optional(),
+                oldInteractionId: z.number().optional(),
             })
         )
         .mutation(async ({ ctx, input }) => {
             await getUserIfExist(ctx, input.token);
+
+            if (input.isDefault && input.oldInteractionId) {
+                await ctx.db.insert(countInteractions).values({
+                    name: input.name,
+                    categoryId: input.categoryId,
+                    amount: input.amount * 100,
+                    monthId: 0,
+                    username: input.username,
+                    isDefault: true,
+                });
+
+                await ctx.db
+                    .delete(countInteractions)
+                    .where(
+                        and(
+                            eq(countInteractions.monthId, input.monthId),
+                            eq(countInteractions.username, input.username),
+                            eq(countInteractions.isDefault, false),
+                            eq(countInteractions.id, input.oldInteractionId)
+                        )
+                    );
+            }
 
             const [newInteraction] = await ctx.db
                 .insert(countInteractions)
@@ -80,6 +94,7 @@ const interactionRouter = createTRPCRouter({
                     amount: input.amount * 100,
                     monthId: input.monthId,
                     username: input.username,
+                    isDefault: input.isDefault ?? false,
                 })
                 .returning();
 

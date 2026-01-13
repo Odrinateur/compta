@@ -1,0 +1,1 @@
+ALTER TABLE `compta_count_interactions` ADD `isDefault` integer DEFAULT false NOT NULL;

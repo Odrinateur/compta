@@ -66,6 +66,8 @@ interface CountInteraction {
     category: CountCategory;
     categoryId: number;
     monthId: number;
+    username: string;
+    isDefault: boolean;
 }
 
 export type {

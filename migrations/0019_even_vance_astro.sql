@@ -1,0 +1,1 @@
+DROP TABLE `compta_count_every_month_interactions`;

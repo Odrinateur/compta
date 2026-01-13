@@ -87,6 +87,7 @@ export const countInteractions = createTable(
             .text("username_payer")
             .notNull()
             .references(() => users.username),
+        isDefault: d.integer({ mode: "boolean" }).notNull().default(false),
     }),
     (t) => [
         index("interactions_month_id_category_id_idx").on(
@@ -98,23 +99,6 @@ export const countInteractions = createTable(
             t.username
         ), // Pour getCurrentMonth (WHERE monthId AND usernamePayer)
         index("interactions_username_payer_idx").on(t.username), // Pour createNewMonth (WHERE usernamePayer)
-    ]
-);
-
-export const countEveryMonthInteractions = createTable(
-    "count_every_month_interactions",
-    (d) => ({
-        idInteraction: d
-            .integer({ mode: "number" })
-            .primaryKey()
-            .references(() => countInteractions.id),
-        isActive: d.integer({ mode: "boolean" }).notNull().default(true),
-    }),
-    (t) => [
-        index("every_month_interactions_id_interaction_idx").on(
-            t.idInteraction
-        ),
-        index("every_month_interactions_is_active_idx").on(t.isActive), // Pour createNewMonth (WHERE isActive = true)
     ]
 );
 

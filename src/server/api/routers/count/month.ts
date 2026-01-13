@@ -6,7 +6,6 @@ import {
 } from "@/server/api/trpc";
 import {
     countCategories,
-    countEveryMonthInteractions,
     countInteractions,
     countMonths,
 } from "@/server/db/schema";
@@ -179,14 +178,13 @@ const createNewMonth = async (
     const defaultInteractions = await ctx.db
         .select(getTableColumns(countInteractions))
         .from(countInteractions)
-        .innerJoin(
-            countEveryMonthInteractions,
-            eq(countInteractions.id, countEveryMonthInteractions.idInteraction)
-        )
         .where(
             and(
-                eq(countEveryMonthInteractions.isActive, true),
-                eq(countInteractions.username, username)
+                and(
+                    eq(countInteractions.isDefault, true),
+                    eq(countInteractions.username, username),
+                    eq(countInteractions.monthId, 0)
+                )
             )
         );
 
@@ -197,6 +195,7 @@ const createNewMonth = async (
             amount: interaction.amount,
             monthId: month[0]!.id,
             username: username,
+            isDefault: true,
         });
     }
 
