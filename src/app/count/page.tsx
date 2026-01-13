@@ -1,8 +1,8 @@
 import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
-import { InteractionCreationInput } from "../_components/count/month/interaction/creation-input";
+import { InteractionCreationInput } from "../_components/count/interaction/creation-input";
 import { MonthNavigation } from "../_components/count/month/navigation";
-import { InteractionTable } from "../_components/count/month/interaction/card";
+import { InteractionTable } from "../_components/count/interaction/card";
 import { TotalAmount } from "../_components/count/month/total-amount";
 
 interface CountPageProps {

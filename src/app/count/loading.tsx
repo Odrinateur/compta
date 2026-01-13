@@ -1,6 +1,6 @@
 import { Skeleton } from "@/app/_components/ui/skeleton";
-import { InteractionCreationInputSkeleton } from "../_components/count/month/interaction/creation-input";
-import { InteractionTableSkeleton } from "../_components/count/month/interaction/card";
+import { InteractionCreationInputSkeleton } from "@/app/_components/count/interaction/creation-input";
+import { InteractionTableSkeleton } from "@/app/_components/count/interaction/card";
 
 export default function Loading() {
     return (

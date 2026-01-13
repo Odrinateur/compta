@@ -1,16 +1,16 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { Input } from "../../../ui/input";
+import { Input } from "@/app/_components/ui/input";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "../../../ui/select";
-import { Button } from "../../../ui/button";
-import { Skeleton } from "../../../ui/skeleton";
+} from "@/app/_components/ui/select";
+import { Button } from "@/app/_components/ui/button";
+import { Skeleton } from "@/app/_components/ui/skeleton";
 import { api } from "@/trpc/react";
 import { type MeUser } from "@/server/db/types";
 import { useState } from "react";
@@ -72,7 +72,7 @@ function InteractionCreationInput({
 
     return (
         <>
-            <section className="flex w-full flex-wrap justify-center gap-4">
+            <section className="flex flex-wrap justify-center gap-4 w-full">
                 <Input
                     type="text"
                     placeholder="Nom"
@@ -133,11 +133,11 @@ function InteractionCreationInput({
 function InteractionCreationInputSkeleton() {
     return (
         <>
-            <section className="flex w-full justify-center gap-4">
-                <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-10 w-16" />
+            <section className="flex justify-center gap-4 w-full">
+                <Skeleton className="w-64 h-10" />
+                <Skeleton className="w-64 h-10" />
+                <Skeleton className="w-64 h-10" />
+                <Skeleton className="w-16 h-10" />
             </section>
         </>
     );
