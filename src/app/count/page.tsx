@@ -2,7 +2,7 @@ import { getUser } from "@/lib/get-user";
 import { api } from "@/trpc/server";
 import { InteractionCreationInput } from "../_components/count/month/interaction/creation-input";
 import { MonthNavigation } from "../_components/count/month/navigation";
-import { InteractionCardGrid } from "../_components/count/month/interaction/card";
+import { InteractionTable } from "../_components/count/month/interaction/card";
 import { TotalAmount } from "../_components/count/month/total-amount";
 
 interface CountPageProps {
@@ -36,7 +36,7 @@ export default async function CountPage({ searchParams }: CountPageProps) {
                 monthId={currentMonth.month.id}
             />
 
-            <InteractionCardGrid user={user} monthId={currentMonth.month.id} />
+            <InteractionTable user={user} monthId={currentMonth.month.id} />
         </>
     );
 }

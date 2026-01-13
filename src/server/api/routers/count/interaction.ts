@@ -1,6 +1,10 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { countCategories, countInteractions } from "@/server/db/schema";
+import {
+    countCategories,
+    countEveryMonthInteractions,
+    countInteractions,
+} from "@/server/db/schema";
 import { eq, and, getTableColumns } from "drizzle-orm";
 import { getUserIfExist } from "../user";
 
@@ -20,11 +24,19 @@ const interactionRouter = createTRPCRouter({
                 .select({
                     ...getTableColumns(countInteractions),
                     category: getTableColumns(countCategories),
+                    isDefault: countEveryMonthInteractions.isActive,
                 })
                 .from(countInteractions)
                 .leftJoin(
                     countCategories,
                     eq(countInteractions.categoryId, countCategories.id)
+                )
+                .leftJoin(
+                    countEveryMonthInteractions,
+                    eq(
+                        countInteractions.id,
+                        countEveryMonthInteractions.idInteraction
+                    )
                 )
                 .where(
                     and(

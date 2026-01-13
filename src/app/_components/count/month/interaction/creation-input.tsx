@@ -54,8 +54,11 @@ function InteractionCreationInput({
     const [amount, setAmount] = useState<number>(0);
     const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
 
+    const isPending =
+        createInteractionMutation.isPending || !name || !amount || !categoryId;
+
     const handleCreateInteraction = () => {
-        if (!categoryId) return;
+        if (isPending) return;
 
         createInteractionMutation.mutate({
             token: user.token,
@@ -69,7 +72,7 @@ function InteractionCreationInput({
 
     return (
         <>
-            <section className="flex flex-wrap justify-center gap-4 w-full">
+            <section className="flex w-full flex-wrap justify-center gap-4">
                 <Input
                     type="text"
                     placeholder="Nom"
@@ -115,7 +118,11 @@ function InteractionCreationInput({
                         ))}
                     </SelectContent>
                 </Select>
-                <Button size="icon" onClick={handleCreateInteraction}>
+                <Button
+                    size="icon"
+                    onClick={handleCreateInteraction}
+                    disabled={isPending}
+                >
                     <Plus />
                 </Button>
             </section>
@@ -126,11 +133,11 @@ function InteractionCreationInput({
 function InteractionCreationInputSkeleton() {
     return (
         <>
-            <section className="flex justify-center gap-4 w-full">
-                <Skeleton className="w-64 h-10" />
-                <Skeleton className="w-64 h-10" />
-                <Skeleton className="w-64 h-10" />
-                <Skeleton className="w-16 h-10" />
+            <section className="flex w-full justify-center gap-4">
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-10 w-16" />
             </section>
         </>
     );
