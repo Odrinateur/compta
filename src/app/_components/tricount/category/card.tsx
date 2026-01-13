@@ -7,18 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { Skeleton } from "../../ui/skeleton";
-import { Plus, Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { H3 } from "../../ui/typography";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogClose,
-} from "../../ui/dialog";
+import { CustomDialog } from "../../custom-dialog";
 
 interface TricountCategoryCardProps {
     categoryRegex: TricountCategoryRegex;
@@ -137,11 +128,20 @@ function RegexItem({
                 >
                     <Pencil />
                 </Button>
-                <Dialog
+                <CustomDialog
                     open={deleteDialogOpen}
-                    onOpenChange={setDeleteDialogOpen}
-                >
-                    <DialogTrigger asChild>
+                    setOpen={setDeleteDialogOpen}
+                    title="Supprimer la regex"
+                    description={
+                        <>
+                            Êtes-vous sûr de vouloir supprimer la regex{" "}
+                            <span className="font-mono font-semibold">
+                                {regex.regex}
+                            </span>
+                            ? Cette action est irréversible.
+                        </>
+                    }
+                    trigger={
                         <Button
                             size="icon"
                             variant="ghost"
@@ -149,46 +149,12 @@ function RegexItem({
                         >
                             <Trash2 />
                         </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Supprimer la regex</DialogTitle>
-                            <DialogDescription>
-                                Êtes-vous sûr de vouloir supprimer la regex{" "}
-                                <span className="font-mono font-semibold">
-                                    {regex.regex}
-                                </span>
-                                ? Cette action est irréversible.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button
-                                    variant="outline"
-                                    disabled={deleteMutation.isPending}
-                                >
-                                    Annuler
-                                </Button>
-                            </DialogClose>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                                disabled={deleteMutation.isPending}
-                                size={
-                                    deleteMutation.isPending
-                                        ? "icon"
-                                        : "default"
-                                }
-                            >
-                                {deleteMutation.isPending ? (
-                                    <Loader2 className="size-4 animate-spin" />
-                                ) : (
-                                    "Supprimer"
-                                )}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                    }
+                    variant="destructive"
+                    confirmText="Supprimer"
+                    onConfirm={handleDelete}
+                    confirmLoading={deleteMutation.isPending}
+                />
             </div>
         </>
     );

@@ -9,18 +9,11 @@ import {
     SettingsIcon,
 } from "lucide-react";
 import { H3 } from "../../ui/typography";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "../../ui/dialog";
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import { type MeUser } from "@/server/db/types";
 import Link from "next/link";
+import { CustomDialog } from "../../custom-dialog";
 
 interface MonthNavigationProps {
     month: number;
@@ -162,32 +155,14 @@ export function MonthNavigation({
                     <ArrowRight />
                 </Button>
             </section>
-            <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>
-                            Création d&apos;un nouveau mois
-                        </DialogTitle>
-                        <DialogDescription>
-                            Vous êtes sur le points de créer un nouveau mois (
-                            {monthNames[targetMonth.month - 1]} -{" "}
-                            {targetMonth.year}
-                            ).
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setOpen(false)}
-                        >
-                            Annuler
-                        </Button>
-                        <Button variant="default" onClick={handleCreateMonth}>
-                            Créer
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <CustomDialog
+                open={open}
+                setOpen={setOpen}
+                title="Création d'un nouveau mois"
+                description={`Vous êtes sur le points de créer un nouveau mois (${monthNames[targetMonth.month - 1]} - ${targetMonth.year}).`}
+                confirmText="Créer"
+                onConfirm={handleCreateMonth}
+            />
         </>
     );
 }

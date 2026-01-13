@@ -3,19 +3,12 @@
 import { PlusIcon, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useRef, useState, useEffect } from "react";
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "../ui/dialog";
+import { CustomDialog } from "../custom-dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { api } from "@/trpc/react";
 import { redirect } from "next/navigation";
+import { DialogFooter } from "../ui/dialog";
 
 interface CreateTricountButtonProps {
     token: string;
@@ -26,6 +19,7 @@ export default function CreateTricountButton({
 }: CreateTricountButtonProps) {
     const [tricountName, setTricountName] = useState("");
     const [isMounted, setIsMounted] = useState(false);
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -50,69 +44,62 @@ export default function CreateTricountButton({
     };
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
+        <CustomDialog
+            open={open}
+            setOpen={setOpen}
+            withIsMounted
+            isMounted={isMounted}
+            title="Create a new tricount"
+            trigger={
                 <Button size="icon">
                     <PlusIcon className="size-4" />
                 </Button>
-            </DialogTrigger>
-            {isMounted && (
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Create a new tricount</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="gap-2 grid">
-                        <Label htmlFor="name">Name</Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            value={tricountName}
-                            onChange={(e) => setTricountName(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (
-                                    e.key === "Enter" &&
-                                    !createTricountMutation.isPending
-                                ) {
-                                    e.preventDefault();
-                                    void handleCreateTricount();
-                                }
-                            }}
-                            required
-                            ref={ref}
-                            disabled={createTricountMutation.isPending}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button
-                                variant="outline"
-                                disabled={createTricountMutation.isPending}
-                            >
-                                Cancel
-                            </Button>
-                        </DialogClose>
-                        <Button
-                            type="submit"
-                            size={
-                                createTricountMutation.isPending
-                                    ? "icon"
-                                    : "default"
-                            }
-                            onClick={handleCreateTricount}
-                            disabled={createTricountMutation.isPending}
-                        >
-                            {createTricountMutation.isPending ? (
-                                <>
-                                    <Loader2 className="size-4 animate-spin" />
-                                </>
-                            ) : (
-                                "Create"
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            )}
-        </Dialog>
+            }
+            variant="custom"
+            footer={
+                <>
+                    <Button
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                        disabled={createTricountMutation.isPending}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        onClick={handleCreateTricount}
+                        disabled={createTricountMutation.isPending}
+                    >
+                        {createTricountMutation.isPending ? (
+                            <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                            "Create"
+                        )}
+                    </Button>
+                </>
+            }
+        >
+            <div className="grid gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                    id="name"
+                    name="name"
+                    value={tricountName}
+                    onChange={(e) => setTricountName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (
+                            e.key === "Enter" &&
+                            !createTricountMutation.isPending
+                        ) {
+                            e.preventDefault();
+                            void handleCreateTricount();
+                        }
+                    }}
+                    required
+                    ref={ref}
+                    disabled={createTricountMutation.isPending}
+                />
+            </div>
+        </CustomDialog>
     );
 }

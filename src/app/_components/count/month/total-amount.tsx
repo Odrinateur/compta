@@ -18,10 +18,10 @@ export function TotalAmount({ user, monthId }: TotalAmountProps) {
             monthId: monthId,
         });
 
-    if (isLoading || !totalAmount) {
+    if (isLoading || totalAmount === undefined || totalAmount === null) {
         return (
             <H2 className="w-full text-center">
-                <Skeleton className="mx-auto w-32 h-8" />
+                <Skeleton className="mx-auto h-8 w-32" />
             </H2>
         );
     }

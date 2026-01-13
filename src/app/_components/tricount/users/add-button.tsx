@@ -3,15 +3,7 @@
 import { type MeUser } from "@/server/db/types";
 import { api } from "@/trpc/react";
 import { useState } from "react";
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "../../ui/dialog";
+import { CustomDialog } from "../../custom-dialog";
 import { Button } from "../../ui/button";
 import { Loader2, PlusIcon } from "lucide-react";
 import { Label } from "../../ui/label";
@@ -75,48 +67,27 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
     };
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
+        <CustomDialog
+            open={open}
+            setOpen={handleOpenChange}
+            title="Ajouter un utilisateur"
+            trigger={
                 <Button variant="outline" size="icon" className="size-8">
                     <PlusIcon className="size-4" />
                 </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Ajouter un utilisateur</DialogTitle>
-                </DialogHeader>
-
-                <div className="gap-2 grid">
-                    <Label htmlFor="username">Nom d&apos;utilisateur</Label>
-                    <Select
-                        value={username}
-                        onValueChange={(value) => setUsername(value)}
-                        disabled={usersNotInTricount?.length === 0}
+            }
+            variant="custom"
+            footer={
+                <>
+                    <Button
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                        disabled={addUserMutation.isPending}
                     >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Sélectionnez un utilisateur" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {usersNotInTricount?.map((user) => (
-                                <SelectItem key={user.users} value={user.users}>
-                                    {user.users}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button
-                            variant="outline"
-                            disabled={addUserMutation.isPending}
-                        >
-                            Annuler
-                        </Button>
-                    </DialogClose>
+                        Annuler
+                    </Button>
                     <Button
                         type="submit"
-                        size={addUserMutation.isPending ? "icon" : "default"}
                         onClick={handleAddUser}
                         disabled={
                             addUserMutation.isPending ||
@@ -124,15 +95,33 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
                         }
                     >
                         {addUserMutation.isPending ? (
-                            <>
-                                <Loader2 className="size-4 animate-spin" />
-                            </>
+                            <Loader2 className="size-4 animate-spin" />
                         ) : (
                             "Ajouter"
                         )}
                     </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </>
+            }
+        >
+            <div className="gap-2 grid">
+                <Label htmlFor="username">Nom d&apos;utilisateur</Label>
+                <Select
+                    value={username}
+                    onValueChange={(value) => setUsername(value)}
+                    disabled={usersNotInTricount?.length === 0}
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez un utilisateur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {usersNotInTricount?.map((user) => (
+                            <SelectItem key={user.users} value={user.users}>
+                                {user.users}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </CustomDialog>
     );
 }

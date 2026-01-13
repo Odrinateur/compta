@@ -3,14 +3,7 @@
 import { type MeUser } from "@/server/db/types";
 import { api } from "@/trpc/react";
 import { useState, useEffect } from "react";
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "../../_components/ui/dialog";
+import { CustomDialog } from "../../_components/custom-dialog";
 import { Button } from "../../_components/ui/button";
 import { Loader2, PencilIcon } from "lucide-react";
 import { Label } from "../../_components/ui/label";
@@ -82,7 +75,7 @@ export default function EditNameButton({
     };
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
+        <>
             <Button
                 variant="ghost"
                 size="icon"
@@ -95,12 +88,39 @@ export default function EditNameButton({
             >
                 <PencilIcon className="size-4" />
             </Button>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Modifier le nom du tricount</DialogTitle>
-                </DialogHeader>
-
-                <div className="gap-2 grid">
+            <CustomDialog
+                open={open}
+                setOpen={handleOpenChange}
+                title="Modifier le nom du tricount"
+                variant="custom"
+                footer={
+                    <>
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                            disabled={updateTricountMutation.isPending}
+                        >
+                            Annuler
+                        </Button>
+                        <Button
+                            type="submit"
+                            onClick={handleUpdateName}
+                            disabled={
+                                updateTricountMutation.isPending ||
+                                name.length === 0 ||
+                                name === currentTricountName
+                            }
+                        >
+                            {updateTricountMutation.isPending ? (
+                                <Loader2 className="size-4 animate-spin" />
+                            ) : (
+                                "Enregistrer"
+                            )}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="grid gap-2">
                     <Label htmlFor="name">Nom</Label>
                     <Input
                         id="name"
@@ -114,39 +134,7 @@ export default function EditNameButton({
                         }}
                     />
                 </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button
-                            variant="outline"
-                            disabled={updateTricountMutation.isPending}
-                        >
-                            Annuler
-                        </Button>
-                    </DialogClose>
-                    <Button
-                        type="submit"
-                        size={
-                            updateTricountMutation.isPending
-                                ? "icon"
-                                : "default"
-                        }
-                        onClick={handleUpdateName}
-                        disabled={
-                            updateTricountMutation.isPending ||
-                            name.length === 0 ||
-                            name === currentTricountName
-                        }
-                    >
-                        {updateTricountMutation.isPending ? (
-                            <>
-                                <Loader2 className="size-4 animate-spin" />
-                            </>
-                        ) : (
-                            "Enregistrer"
-                        )}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </CustomDialog>
+        </>
     );
 }

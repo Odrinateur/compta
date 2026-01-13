@@ -1,20 +1,12 @@
 "use client";
 
 import { Button } from "@/app/_components/ui/button";
-import { CheckIcon, Loader2 } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { api } from "@/trpc/react";
 import { type MeUser } from "@/server/db/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/app/_components/ui/dialog";
+import { CustomDialog } from "@/app/_components/custom-dialog";
 
 interface RefundDebtButtonProps {
     user: MeUser;
@@ -63,46 +55,19 @@ export default function RefundDebtButton({
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+        <CustomDialog
+            open={open}
+            setOpen={setOpen}
+            title="Confirmer le remboursement"
+            description="Êtes-vous sûr de vouloir marquer cette dette comme remboursée ? Cette action est irréversible."
+            trigger={
                 <Button size="icon" variant="outline">
                     <CheckIcon />
                 </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Confirmer le remboursement</DialogTitle>
-                </DialogHeader>
-                <p className="text-muted-foreground text-sm">
-                    Êtes-vous sûr de vouloir marquer cette dette comme
-                    remboursée ? Cette action est irréversible.
-                </p>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button
-                            variant="outline"
-                            disabled={markDebtAsRefundedMutation.isPending}
-                        >
-                            Annuler
-                        </Button>
-                    </DialogClose>
-                    <Button
-                        onClick={handleRefund}
-                        disabled={markDebtAsRefundedMutation.isPending}
-                        size={
-                            markDebtAsRefundedMutation.isPending
-                                ? "icon"
-                                : "default"
-                        }
-                    >
-                        {markDebtAsRefundedMutation.isPending ? (
-                            <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                            "Confirmer"
-                        )}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            }
+            confirmText="Confirmer"
+            onConfirm={handleRefund}
+            confirmLoading={markDebtAsRefundedMutation.isPending}
+        />
     );
 }
