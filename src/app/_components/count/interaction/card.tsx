@@ -4,7 +4,7 @@ import { type CountInteraction, type MeUser } from "@/server/db/types";
 import { Skeleton } from "@/app/_components/ui/skeleton";
 import { BookmarkPlus, Sparkles } from "lucide-react";
 import { api } from "@/trpc/react";
-import { formatAmount } from "@/lib/utils";
+import { cn, formatAmount } from "@/lib/utils";
 import { Badge } from "@/app/_components/ui/badge";
 import {
     Table,
@@ -105,7 +105,7 @@ function InteractionTable({ user, monthId }: InteractionTableProps) {
         interaction: CountInteraction,
         isDefault: boolean
     ) => (
-        <TableRow key={interaction.id} className="cursor-pointer">
+        <TableRow key={interaction.id} className={isDefault ? "bg-muted" : ""}>
             <TableCell className="font-medium text-lg">
                 {interaction.name}
             </TableCell>
@@ -118,11 +118,7 @@ function InteractionTable({ user, monthId }: InteractionTableProps) {
                 </Badge>
             </TableCell>
             <TableCell className="flex justify-center">
-                <EditInteractionButton
-                    user={user}
-                    monthId={monthId}
-                    interactionId={interaction.id}
-                />
+                <EditInteractionButton interactionId={interaction.id} />
                 <DeleteInteractionButton
                     user={user}
                     monthId={monthId}
