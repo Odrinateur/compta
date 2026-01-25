@@ -2,6 +2,7 @@ import userRouter from "@/server/api/routers/user";
 import tricountRouter from "@/server/api/routers/tricount/tricount";
 import tricountInteractionRouter from "@/server/api/routers/tricount/interaction";
 import tricountCategoryRouter from "@/server/api/routers/tricount/category";
+import pushRouter from "@/server/api/routers/push";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import countMonthRouter from "./routers/count/month";
 import countInteractionRouter from "./routers/count/interaction";
@@ -17,6 +18,8 @@ export const appRouter = createTRPCRouter({
     tricount: tricountRouter,
     tricountInteraction: tricountInteractionRouter,
     tricountCategory: tricountCategoryRouter,
+
+    push: pushRouter,
 
     countMonth: countMonthRouter,
     countInteraction: countInteractionRouter,

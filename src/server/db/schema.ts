@@ -205,3 +205,25 @@ export const tri_users_payees = createTable(
         index("tri_users_payees_username_payee_idx").on(t.usernamePayee), // Pour les futures requêtes par utilisateur payeur
     ]
 );
+
+export const pushSubscriptions = createTable(
+    "push_subscriptions",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        username: d
+            .text("username")
+            .notNull()
+            .references(() => users.username),
+        endpoint: d.text("endpoint").notNull().unique(),
+        p256dh: d.text("p256dh").notNull(), // Public key
+        auth: d.text("auth").notNull(), // Auth secret
+        createdAt: d
+            .text("created_at")
+            .notNull()
+            .default(sql`(current_timestamp)`),
+    }),
+    (t) => [
+        index("push_subscriptions_username_idx").on(t.username),
+        index("push_subscriptions_endpoint_idx").on(t.endpoint),
+    ]
+);

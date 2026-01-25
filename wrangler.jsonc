@@ -25,6 +25,12 @@
   "observability": {
     "enabled": true,
   },
+  // VAPID keys for Web Push notifications
+  // Generate keys with: npx web-push generate-vapid-keys
+  // Then set as secrets:
+  //   wrangler secret put VAPID_PUBLIC_KEY
+  //   wrangler secret put VAPID_PRIVATE_KEY
+  //   wrangler secret put VAPID_SUBJECT (e.g., "mailto:contact@example.com")
   "preview_urls": false,
   "workers_dev": false,
   "routes": [

@@ -141,6 +141,13 @@
       "when": 1768314234337,
       "tag": "0019_even_vance_astro",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1769356521111,
+      "tag": "0020_charming_living_tribunal",
+      "breakpoints": true
     }
   ]
 }

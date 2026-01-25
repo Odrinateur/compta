@@ -4,6 +4,7 @@ import { TricountCardGrid } from "../_components/tricount/card";
 import Link from "next/link";
 import { Button } from "../_components/ui/button";
 import { ArrowLeftIcon } from "lucide-react";
+import { PushNotificationToggle } from "../_components/push-notification-toggle";
 
 export default async function TricountsPage() {
     const user = await getUser();
@@ -17,6 +18,7 @@ export default async function TricountsPage() {
                     </Button>
                 </Link>
                 <CreateTricountButton token={user?.token} />
+                <PushNotificationToggle user={user} />
             </div>
             <section className="flex flex-col justify-start items-start gap-4 w-full">
                 <TricountCardGrid user={user} />
