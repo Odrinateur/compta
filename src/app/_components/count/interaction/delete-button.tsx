@@ -42,6 +42,10 @@ export function DeleteInteractionButton({
                     monthId: monthId,
                 });
 
+                await utils.countInteraction.getDefaultInteractions.invalidate({
+                    token: user.token,
+                });
+
                 setOpen(false);
             },
         });

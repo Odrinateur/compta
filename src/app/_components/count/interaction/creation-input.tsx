@@ -44,6 +44,13 @@ function InteractionCreationInput({
                     monthId: monthId,
                 });
 
+                if (monthId === 0)
+                    await utils.countInteraction.getDefaultInteractions.invalidate(
+                        {
+                            token: user.token,
+                        }
+                    );
+
                 setName("");
                 setAmount(0);
                 setCategoryId(undefined);
@@ -67,6 +74,7 @@ function InteractionCreationInput({
             name: name,
             categoryId: categoryId,
             amount: amount,
+            ...(monthId === 0 ? { isDefault: true } : {}),
         });
     };
 

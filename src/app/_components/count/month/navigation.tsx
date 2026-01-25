@@ -127,7 +127,7 @@ export function MonthNavigation({
                             <ArrowLeftIcon />
                         </Button>
                     </Link>
-                    <Link href={`/count/settings?monthId=${previousMonthId}`}>
+                    <Link href={`/count/settings`}>
                         <Button size="icon">
                             <SettingsIcon />
                         </Button>

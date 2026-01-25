@@ -36,6 +36,34 @@ const interactionRouter = createTRPCRouter({
                 );
         }),
 
+    getDefaultInteractions: publicProcedure
+        .input(
+            z.object({
+                token: z.string(),
+            })
+        )
+        .query(async ({ ctx, input }) => {
+            const user = await getUserIfExist(ctx, input.token);
+
+            return await ctx.db
+                .select({
+                    ...getTableColumns(countInteractions),
+                    category: getTableColumns(countCategories),
+                })
+                .from(countInteractions)
+                .leftJoin(
+                    countCategories,
+                    eq(countInteractions.categoryId, countCategories.id)
+                )
+                .where(
+                    and(
+                        eq(countInteractions.isDefault, true),
+                        eq(countInteractions.monthId, 0),
+                        eq(countInteractions.username, user.username)
+                    )
+                );
+        }),
+
     getCategories: publicProcedure
         .input(
             z.object({
