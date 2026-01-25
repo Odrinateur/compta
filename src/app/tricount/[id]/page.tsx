@@ -10,6 +10,7 @@ import { Button } from "@/app/_components/ui/button";
 import { ArrowLeftIcon, PlusIcon, SettingsIcon } from "lucide-react";
 import { TrictountInteractionGridCard } from "@/app/_components/tricount/interaction/card";
 import TricountStats from "@/app/_components/tricount/stats";
+import { FloatingAddButton } from "@/app/_components/tricount/floating-add-button";
 
 export default async function TricountPage({
     params,
@@ -34,8 +35,8 @@ export default async function TricountPage({
 
     return (
         <>
-            <div className="relative flex justify-center gap-2 w-full">
-                <div className="left-0 absolute flex items-center gap-2">
+            <div className="relative flex w-full justify-center gap-2">
+                <div className="absolute left-0 flex items-center gap-2">
                     <Link href="/tricount">
                         <Button size="icon">
                             <ArrowLeftIcon />
@@ -46,13 +47,17 @@ export default async function TricountPage({
                             <SettingsIcon />
                         </Button>
                     </Link>
-                    <Link href={`/tricount/${id}/interaction/new`}>
+                    {/* Bouton + visible uniquement sur desktop */}
+                    <Link
+                        href={`/tricount/${id}/interaction/new`}
+                        className="hidden sm:block"
+                    >
                         <Button size="icon">
                             <PlusIcon />
                         </Button>
                     </Link>
                 </div>
-                <div className="flex justify-center items-center gap-2 mt-10 sm:mt-0">
+                <div className="mt-10 flex items-center justify-center gap-2 sm:mt-0">
                     <TricountName
                         user={user}
                         idTri={Number(id)}
@@ -64,7 +69,7 @@ export default async function TricountPage({
                         currentName={tricount.name}
                     />
                 </div>
-                <div className="right-0 absolute flex items-center gap-2">
+                <div className="absolute right-0 flex items-center gap-2">
                     <AddUserButton user={user} idTri={Number(id)} />
                     <Avatars user={user} idTri={Number(id)} />
                 </div>
@@ -73,6 +78,8 @@ export default async function TricountPage({
             <TricountStats user={user} idTri={Number(id)} />
 
             <TrictountInteractionGridCard user={user} idTri={Number(id)} />
+
+            <FloatingAddButton href={`/tricount/${id}/interaction/new`} />
         </>
     );
 }

@@ -15,8 +15,9 @@ import {
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
 import { Card, CardContent, CardFooter } from "../../ui/card";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import { Skeleton } from "../../ui/skeleton";
+import { CustomDialog } from "../../custom-dialog";
 import MultipleSelector, { type Option } from "../../ui/multi-select";
 import { type MeUser, type TricountInteraction } from "@/server/db/types";
 import Link from "next/link";
@@ -55,6 +56,7 @@ function TricountInteractionForm({
             value: p.username,
         })) ?? []
     );
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const defaultsSetRef = useRef(isEditMode);
 
     const categories = api.tricountCategory.getCategoriesByTricount.useQuery({
@@ -122,6 +124,28 @@ function TricountInteractionForm({
             },
         });
 
+    const deleteInteractionMutation =
+        api.tricountInteraction.removeInteraction.useMutation({
+            onSuccess: async () => {
+                await utils.tricountInteraction.getInteractionsByTricount.invalidate(
+                    {
+                        token: user.token,
+                        idTri,
+                    }
+                );
+                router.push(`/tricount/${idTri}`);
+            },
+        });
+
+    const handleDelete = async () => {
+        if (!interaction) return;
+        await deleteInteractionMutation.mutateAsync({
+            token: user.token,
+            idTri,
+            idInteraction: interaction.id,
+        });
+    };
+
     const handleEditName = (name: string) => {
         const categoryRegex = categoriesRegexes.data?.find((c) =>
             c.regexes.find((r) =>
@@ -136,7 +160,9 @@ function TricountInteractionForm({
     };
 
     const isPending =
-        addInteractionMutation.isPending || updateInteractionMutation.isPending;
+        addInteractionMutation.isPending ||
+        updateInteractionMutation.isPending ||
+        deleteInteractionMutation.isPending;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -344,38 +370,69 @@ function TricountInteractionForm({
                                 />
                             </div>
                         </CardContent>
-                        <CardFooter className="border-t flex justify-end gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() =>
-                                    router.push(`/tricount/${idTri}`)
-                                }
-                            >
-                                Annuler
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={
-                                    isPending ||
-                                    !name ||
-                                    !categoryId ||
-                                    !amount ||
-                                    !usernamePayer
-                                }
-                                className="min-w-[140px]"
-                            >
-                                {isPending ? (
-                                    <>
-                                        <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                                        Création...
-                                    </>
-                                ) : isEditMode ? (
-                                    "Modifier l'interaction"
-                                ) : (
-                                    "Créer l'interaction"
+                        <CardFooter className="border-t flex justify-between gap-3">
+                            <div>
+                                {isEditMode && (
+                                    <CustomDialog
+                                        open={deleteDialogOpen}
+                                        setOpen={setDeleteDialogOpen}
+                                        title="Supprimer l'interaction"
+                                        description="Êtes-vous sûr de vouloir supprimer cette interaction ? Cette action est irréversible."
+                                        variant="destructive"
+                                        confirmText="Supprimer"
+                                        onConfirm={handleDelete}
+                                        confirmLoading={
+                                            deleteInteractionMutation.isPending
+                                        }
+                                        trigger={
+                                            <Button
+                                                type="button"
+                                                variant="destructive"
+                                                size="icon"
+                                                disabled={isPending}
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        }
+                                    />
                                 )}
-                            </Button>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() =>
+                                        router.push(`/tricount/${idTri}`)
+                                    }
+                                    disabled={isPending}
+                                >
+                                    Annuler
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        isPending ||
+                                        !name ||
+                                        !categoryId ||
+                                        !amount ||
+                                        !usernamePayer
+                                    }
+                                    className="min-w-[140px]"
+                                >
+                                    {isPending ? (
+                                        <>
+                                            <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                                            {isEditMode
+                                                ? "Modification..."
+                                                : "Création..."}
+                                        </>
+                                    ) : isEditMode ? (
+                                        "Modifier l'interaction"
+                                    ) : (
+                                        "Créer l'interaction"
+                                    )}
+                                </Button>
+                            </div>
                         </CardFooter>
                     </form>
                 </Card>

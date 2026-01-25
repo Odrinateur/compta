@@ -112,6 +112,59 @@ export async function sendNotificationToTricountMembers(
     await sendNotificationToUsers(ctx, usernames, payload);
 }
 
+// Helper to format amount in euros
+export function formatAmountEuro(amountInCents: number): string {
+    return (amountInCents / 100).toFixed(2).replace(".", ",") + " €";
+}
+
+// Helper to get tricount name
+export async function getTricountName(
+    ctx: Awaited<ReturnType<typeof createTRPCContext>>,
+    tricountId: number
+): Promise<string> {
+    const tricountData = await ctx.db
+        .select({ name: tri.name })
+        .from(tri)
+        .where(eq(tri.id, tricountId))
+        .limit(1);
+
+    return tricountData[0]?.name ?? "Tricount";
+}
+
+type InteractionAction = "added" | "updated" | "deleted" | "refunded";
+
+// Helper function to send interaction notifications to tricount members
+export async function notifyTricountInteraction(
+    ctx: Awaited<ReturnType<typeof createTRPCContext>>,
+    options: {
+        tricountId: number;
+        username: string;
+        interactionName: string;
+        amountInCents: number;
+        action: InteractionAction;
+    }
+) {
+    const { tricountId, username, interactionName, amountInCents, action } = options;
+
+    const actionMessages: Record<InteractionAction, string> = {
+        added: "a ajouté",
+        updated: "a modifié",
+        deleted: "a supprimé",
+        refunded: "a marqué comme remboursé",
+    };
+
+    const tricountName = await getTricountName(ctx, tricountId);
+    const amountFormatted = formatAmountEuro(amountInCents);
+    const actionText = actionMessages[action];
+
+    await sendNotificationToTricountMembers(ctx, tricountId, username, {
+        title: tricountName,
+        body: `${username} ${actionText} "${interactionName}" (${amountFormatted})`,
+        url: `/tricount/${tricountId}`,
+        tag: `tricount-${tricountId}-interaction`,
+    });
+}
+
 const pushRouter = createTRPCRouter({
     // Get the VAPID public key (needed by the client)
     getVapidPublicKey: publicProcedure.query(() => {

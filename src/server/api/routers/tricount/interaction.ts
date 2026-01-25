@@ -1,7 +1,6 @@
 import z from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import {
-    tri,
     tri_categories,
     tri_interactions,
     tri_users_payees,
@@ -9,7 +8,12 @@ import {
 import { and, eq, inArray } from "drizzle-orm";
 import { getUserIfExist } from "../user";
 import { hasAccess } from "./tricount";
-import { sendNotificationToTricountMembers, sendNotificationToUsers } from "../push";
+import {
+    sendNotificationToUsers,
+    notifyTricountInteraction,
+    getTricountName,
+    formatAmountEuro,
+} from "../push";
 
 const tricountInteractionRouter = createTRPCRouter({
     getInteractionsByTricount: publicProcedure
@@ -152,26 +156,13 @@ const tricountInteractionRouter = createTRPCRouter({
 
             // Send push notification to other tricount members
             try {
-                const tricountData = await ctx.db
-                    .select({ name: tri.name })
-                    .from(tri)
-                    .where(eq(tri.id, input.idTri))
-                    .limit(1);
-
-                const tricountName = tricountData[0]?.name ?? "Tricount";
-                const amountFormatted = (input.amount).toFixed(2).replace(".", ",") + " €";
-
-                await sendNotificationToTricountMembers(
-                    ctx,
-                    input.idTri,
-                    user.username,
-                    {
-                        title: tricountName,
-                        body: `${user.username} a ajouté "${input.name}" (${amountFormatted})`,
-                        url: `/tricount/${input.idTri}`,
-                        tag: `tricount-${input.idTri}-interaction`,
-                    }
-                );
+                await notifyTricountInteraction(ctx, {
+                    tricountId: input.idTri,
+                    username: user.username,
+                    interactionName: input.name,
+                    amountInCents: amountInCents,
+                    action: "added",
+                });
             } catch {
                 // Don't fail the mutation if notification fails
                 console.error("Failed to send push notification");
@@ -193,6 +184,21 @@ const tricountInteractionRouter = createTRPCRouter({
 
             await hasAccess(ctx, user.username, input.idTri);
 
+            // Get interaction details before deletion for notification
+            const interactionData = await ctx.db
+                .select({
+                    name: tri_interactions.name,
+                    amount: tri_interactions.amount,
+                })
+                .from(tri_interactions)
+                .where(
+                    and(
+                        eq(tri_interactions.id, input.idInteraction),
+                        eq(tri_interactions.triId, input.idTri)
+                    )
+                )
+                .limit(1);
+
             await ctx.db
                 .delete(tri_users_payees)
                 .where(eq(tri_users_payees.idInteraction, input.idInteraction));
@@ -205,6 +211,22 @@ const tricountInteractionRouter = createTRPCRouter({
                         eq(tri_interactions.triId, input.idTri)
                     )
                 );
+
+            // Send notification to other tricount members
+            if (interactionData[0]) {
+                try {
+                    await notifyTricountInteraction(ctx, {
+                        tricountId: input.idTri,
+                        username: user.username,
+                        interactionName: interactionData[0].name,
+                        amountInCents: interactionData[0].amount,
+                        action: "deleted",
+                    });
+                } catch {
+                    // Don't fail the mutation if notification fails
+                    console.error("Failed to send push notification");
+                }
+            }
         }),
 
     setInteractionRefunded: publicProcedure
@@ -250,14 +272,8 @@ const tricountInteractionRouter = createTRPCRouter({
             // Send notification to the original payer if marking as refunded
             if (input.isRefunded && interactionData[0]) {
                 try {
-                    const tricountData = await ctx.db
-                        .select({ name: tri.name })
-                        .from(tri)
-                        .where(eq(tri.id, input.idTri))
-                        .limit(1);
-
-                    const tricountName = tricountData[0]?.name ?? "Tricount";
-                    const amountFormatted = (interactionData[0].amount / 100).toFixed(2).replace(".", ",") + " €";
+                    const tricountName = await getTricountName(ctx, input.idTri);
+                    const amountFormatted = formatAmountEuro(interactionData[0].amount);
 
                     // Notify the payer (if it's not the same user)
                     if (interactionData[0].usernamePayer !== user.username) {
