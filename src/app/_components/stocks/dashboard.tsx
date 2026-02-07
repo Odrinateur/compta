@@ -143,14 +143,109 @@ function StocksDashboard({
         );
     }, [history?.series]);
     const transactionPoints = useMemo(() => {
-        return (history?.transactions ?? []).map((transaction) => ({
-            id: transaction.id,
-            timestamp: new Date(transaction.date).getTime(),
-            price: transaction.price,
-            quantity: transaction.quantity,
-            side: transaction.side as "buy" | "sell",
-        }));
-    }, [history?.transactions]);
+        if (!history?.transactions || series.length === 0) return [];
+
+        const rangeStart = series[0]!.timestamp;
+        const rangeEnd = series[series.length - 1]!.timestamp;
+
+        const toDayKey = (timestamp: number) => {
+            const date = new Date(timestamp);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+            return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        };
+
+        const toDayStart = (timestamp: number) => {
+            const date = new Date(timestamp);
+            return new Date(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate()
+            ).getTime();
+        };
+
+        const mergedBuys = new Map<
+            string,
+            {
+                id: number;
+                timestamp: number;
+                quantity: number;
+                totalCost: number;
+            }
+        >();
+        const mergedSells = new Map<
+            string,
+            {
+                id: number;
+                timestamp: number;
+                quantity: number;
+                totalCost: number;
+            }
+        >();
+        const result: Array<{
+            id: number;
+            timestamp: number;
+            price: number;
+            quantity: number;
+            side: "buy" | "sell";
+        }> = [];
+
+        for (const transaction of history.transactions) {
+            const timestamp = new Date(transaction.date).getTime();
+            if (timestamp < rangeStart || timestamp > rangeEnd) continue;
+
+            const side = transaction.side as "buy" | "sell";
+            const dayKey = toDayKey(timestamp);
+            const dayStart = toDayStart(timestamp);
+
+            if (side === "buy") {
+                const entry = mergedBuys.get(dayKey) ?? {
+                    id: -dayStart,
+                    timestamp: dayStart,
+                    quantity: 0,
+                    totalCost: 0,
+                };
+                entry.quantity += transaction.quantity;
+                entry.totalCost += transaction.price * transaction.quantity;
+                mergedBuys.set(dayKey, entry);
+            } else {
+                const entry = mergedSells.get(dayKey) ?? {
+                    id: -dayStart - 1,
+                    timestamp: dayStart,
+                    quantity: 0,
+                    totalCost: 0,
+                };
+                entry.quantity += transaction.quantity;
+                entry.totalCost += transaction.price * transaction.quantity;
+                mergedSells.set(dayKey, entry);
+            }
+        }
+
+        for (const entry of mergedBuys.values()) {
+            result.push({
+                id: entry.id,
+                timestamp: entry.timestamp,
+                price:
+                    entry.quantity > 0 ? entry.totalCost / entry.quantity : 0,
+                quantity: entry.quantity,
+                side: "buy",
+            });
+        }
+
+        for (const entry of mergedSells.values()) {
+            result.push({
+                id: entry.id,
+                timestamp: entry.timestamp,
+                price:
+                    entry.quantity > 0 ? entry.totalCost / entry.quantity : 0,
+                quantity: entry.quantity,
+                side: "sell",
+            });
+        }
+
+        return result.sort((a, b) => a.timestamp - b.timestamp);
+    }, [history?.transactions, series]);
 
     const latestPrice =
         series.length > 0 ? series[series.length - 1]!.value : 0;
@@ -284,8 +379,8 @@ function StocksDashboard({
         : "Tous les ETFs";
 
     return (
-        <div className="flex flex-col gap-6 w-full">
-            <div className="flex justify-between items-center">
+        <div className="flex w-full flex-col gap-6">
+            <div className="flex items-center justify-between">
                 <H3>Stocks</H3>
                 <div className="flex items-center gap-2">
                     <Link href="/stocks/transactions">
@@ -301,7 +396,7 @@ function StocksDashboard({
                 </div>
             </div>
 
-            <section className="flex flex-wrap justify-between items-center gap-3">
+            <section className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap gap-2">
                     <Select
                         value={selectedEtfId ? String(selectedEtfId) : "all"}
@@ -346,12 +441,12 @@ function StocksDashboard({
                     </Select>
                 </div>
 
-                <div className="flex flex-wrap justify-center md:justify-end gap-6 w-full md:w-auto text-right">
+                <div className="flex w-full flex-wrap justify-center gap-6 text-right md:w-auto md:justify-end">
                     <div>
                         <p className="text-muted-foreground text-xs">
                             {isEtfView ? "Cours" : "Valeur"}
                         </p>
-                        <p className="font-semibold tabular-nums text-lg">
+                        <p className="text-lg font-semibold tabular-nums">
                             {formatCurrency(portfolioValue, 3)}
                         </p>
                     </div>
@@ -359,7 +454,7 @@ function StocksDashboard({
                         <p className="text-muted-foreground text-xs">
                             {isEtfView ? "Prix moyen" : "Investi"}
                         </p>
-                        <p className="font-semibold tabular-nums text-lg">
+                        <p className="text-lg font-semibold tabular-nums">
                             {formatCurrency(
                                 isEtfView && costBasis.quantity > 0
                                     ? costBasis.invested / costBasis.quantity
@@ -373,7 +468,7 @@ function StocksDashboard({
                             <p className="text-muted-foreground text-xs">
                                 Position
                             </p>
-                            <p className="font-semibold tabular-nums text-lg">
+                            <p className="text-lg font-semibold tabular-nums">
                                 {costBasis.quantity} /{" "}
                                 {costBasis.quantity > 0
                                     ? formatCurrency(costBasis.invested, 3)
@@ -391,7 +486,7 @@ function StocksDashboard({
                                 side="top"
                                 content={
                                     <div className="flex flex-col gap-1">
-                                        <div className="flex justify-between items-center gap-3">
+                                        <div className="flex items-center justify-between gap-3">
                                             <span>Realisee</span>
                                             <span className="tabular-nums">
                                                 {realizedGainValue !== null &&
@@ -404,7 +499,7 @@ function StocksDashboard({
                                                 )}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between items-center gap-3">
+                                        <div className="flex items-center justify-between gap-3">
                                             <span>Latente</span>
                                             <span className="tabular-nums">
                                                 {unrealizedGainValue !== null &&
@@ -420,18 +515,18 @@ function StocksDashboard({
                                     </div>
                                 }
                             >
-                                <p className="font-semibold tabular-nums text-lg">
+                                <p className="text-lg font-semibold tabular-nums">
                                     {gainValue >= 0 ? "+" : ""}
                                     {formatCurrency(gainValue, 3)}
                                 </p>
                             </ResponsiveTooltip>
                         ) : (
-                            <p className="font-semibold tabular-nums text-lg">
+                            <p className="text-lg font-semibold tabular-nums">
                                 {gainValue >= 0 ? "+" : ""}
                                 {formatCurrency(gainValue, 3)}
                             </p>
                         )}
-                        <p className="tabular-nums text-muted-foreground text-xs">
+                        <p className="text-muted-foreground text-xs tabular-nums">
                             {gainPercent >= 0 ? "+" : ""}
                             {gainPercent.toFixed(2)}%
                         </p>
@@ -439,7 +534,7 @@ function StocksDashboard({
                 </div>
             </section>
 
-            <section className="bg-background border rounded-xl p-4">
+            <section className="bg-background rounded-xl border p-4">
                 <PriceChart
                     series={series}
                     transactions={transactionPoints}
