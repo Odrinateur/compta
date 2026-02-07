@@ -21,6 +21,15 @@ export function formatAmount(amount: number): string {
     }).format(amount / 100);
 }
 
+export function formatCurrency(amount: number, fractionDigits = 2): string {
+    return new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
+    }).format(amount);
+}
+
 export function formatDate(dateStr: string): string {
     const date = new Date(dateStr);
     return new Intl.DateTimeFormat("fr-FR", {

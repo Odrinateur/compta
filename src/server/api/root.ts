@@ -6,6 +6,7 @@ import pushRouter from "@/server/api/routers/push";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import countMonthRouter from "./routers/count/month";
 import countInteractionRouter from "./routers/count/interaction";
+import stocksRouter from "./routers/stocks";
 
 /**
  * This is the primary router for your server.
@@ -23,6 +24,8 @@ export const appRouter = createTRPCRouter({
 
     countMonth: countMonthRouter,
     countInteraction: countInteractionRouter,
+
+    stocks: stocksRouter,
 });
 
 // export type definition of API

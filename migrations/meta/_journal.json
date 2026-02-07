@@ -148,6 +148,20 @@
       "when": 1769356521111,
       "tag": "0020_charming_living_tribunal",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1770478290556,
+      "tag": "0021_silent_roland_deschain",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1770478362997,
+      "tag": "0022_oval_black_knight",
+      "breakpoints": true
     }
   ]
 }

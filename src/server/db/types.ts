@@ -70,6 +70,29 @@ interface CountInteraction {
     isDefault: boolean;
 }
 
+interface Etf {
+    id: number;
+    username: string;
+    name: string;
+    identifier: string;
+    yahooSymbol: string;
+    yahooName: string;
+    annualFeePercent: number;
+    createdAt: string;
+}
+
+interface StockTransaction {
+    id: number;
+    etfId: number;
+    username: string;
+    date: string;
+    side?: "buy" | "sell";
+    quantity: number;
+    price: number;
+    operationFee: number;
+    etf?: Etf;
+}
+
 export type {
     Tricount,
     TricountInteraction,
@@ -81,4 +104,6 @@ export type {
     TricountCategory,
     TricountCategoryRegex,
     CountInteraction,
+    Etf,
+    StockTransaction,
 };

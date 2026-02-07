@@ -10,6 +10,9 @@ export default async function Home() {
             <Link href="/tricount">
                 <Button variant="link">Tricount</Button>
             </Link>
+            <Link href="/stocks">
+                <Button variant="link">Stocks</Button>
+            </Link>
         </main>
     );
 }

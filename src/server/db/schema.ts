@@ -227,3 +227,55 @@ export const pushSubscriptions = createTable(
         index("push_subscriptions_endpoint_idx").on(t.endpoint),
     ]
 );
+
+export const etfs = createTable(
+    "etfs",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        username: d
+            .text("username")
+            .notNull()
+            .references(() => users.username),
+        name: d.text("name").notNull(),
+        identifier: d.text("identifier").notNull(),
+        yahooSymbol: d.text("yahoo_symbol").notNull(),
+        yahooName: d.text("yahoo_name").notNull().default(""),
+        annualFeePercent: d.real("annual_fee_percent").notNull().default(0),
+        createdAt: d
+            .text("created_at")
+            .notNull()
+            .default(sql`(current_timestamp)`),
+    }),
+    (t) => [
+        index("etfs_username_idx").on(t.username),
+        index("etfs_yahoo_symbol_idx").on(t.yahooSymbol),
+    ]
+);
+
+export const stockTransactions = createTable(
+    "stock_transactions",
+    (d) => ({
+        id: d.integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+        etfId: d
+            .integer({ mode: "number" })
+            .notNull()
+            .references(() => etfs.id),
+        username: d
+            .text("username")
+            .notNull()
+            .references(() => users.username),
+        date: d
+            .text("date")
+            .notNull()
+            .default(sql`(current_timestamp)`),
+        side: d.text("side").notNull().default("buy"),
+        quantity: d.real("quantity").notNull(),
+        price: d.real("price").notNull(),
+        operationFee: d.real("operation_fee").notNull().default(0),
+    }),
+    (t) => [
+        index("stock_transactions_etf_id_idx").on(t.etfId),
+        index("stock_transactions_username_idx").on(t.username),
+        index("stock_transactions_date_idx").on(t.date),
+    ]
+);
