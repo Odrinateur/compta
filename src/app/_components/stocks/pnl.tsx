@@ -48,7 +48,19 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
 
     const list = useMemo(() => {
         if (!data) return [];
-        const sorted = [...data].sort((a, b) => b.totalPnl - a.totalPnl);
+        const sorted = [...data].sort((a, b) => {
+            const aHoldingValue = a.quantity * a.currentPrice;
+            const bHoldingValue = b.quantity * b.currentPrice;
+            const aIsEmpty = aHoldingValue === 0 && a.invested === 0;
+            const bIsEmpty = bHoldingValue === 0 && b.invested === 0;
+
+            // Mettre les éléments vides en dernier
+            if (aIsEmpty && !bIsEmpty) return 1;
+            if (!aIsEmpty && bIsEmpty) return -1;
+
+            // Sinon, trier par totalPnl décroissant
+            return b.totalPnl - a.totalPnl;
+        });
         return typeof limit === "number" ? sorted.slice(0, limit) : sorted;
     }, [data, limit]);
 
@@ -59,11 +71,11 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
     };
 
     return (
-        <div className="flex w-full flex-col gap-6">
+        <div className="flex flex-col gap-6 w-full">
             {isLoading ? (
-                <Skeleton className="h-40 w-full" />
+                <Skeleton className="w-full h-40" />
             ) : list.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div className="gap-4 grid md:grid-cols-2 xl:grid-cols-3">
                     {list.map((etf, index) => {
                         const holdingValue = etf.quantity * etf.currentPrice;
                         const pnlPercent =
@@ -80,14 +92,14 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
                         return (
                             <div
                                 key={etf.etfId}
-                                className="bg-card/90 group relative cursor-pointer overflow-hidden rounded-2xl border p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                                className={`bg-card/90 group relative cursor-pointer overflow-hidden rounded-2xl border p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${holdingValue === 0 && etf.invested === 0 ? "opacity-70" : ""}`}
                                 onClick={() => handleClick(etf.etfId)}
                             >
-                                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_hsl(var(--color-primary)/0.12),transparent_60%)]" />
-                                <div className="relative flex items-start justify-between gap-4">
+                                <div className="bg-[radial-gradient(circle_at_top,_hsl(var(--color-primary)/0.12),transparent_60%)] absolute inset-0 pointer-events-none" />
+                                <div className="relative flex justify-between items-start gap-4">
                                     <div className="flex items-center gap-3">
                                         <div
-                                            className="flex h-12 w-12 items-center justify-center rounded-full text-sm font-semibold text-white shadow-sm"
+                                            className="shadow-sm rounded-full flex justify-center items-center w-12 h-12 font-semibold text-white text-sm"
                                             style={getAvatarGradient(etf.etfId)}
                                         >
                                             {etf.etfName
@@ -98,7 +110,7 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
                                                 .toUpperCase()}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold">
+                                            <p className="font-semibold text-sm">
                                                 {etf.etfName}
                                             </p>
                                             <p className="text-muted-foreground text-xs">
@@ -112,7 +124,7 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
                                     </div>
                                 </div>
 
-                                <div className="relative mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                                <div className="relative gap-4 grid lg:grid-cols-[1.2fr_0.8fr] mt-5">
                                     <div className="flex flex-col gap-2">
                                         <div>
                                             <p className="text-muted-foreground text-xs">
@@ -127,12 +139,12 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
                                                     3
                                                 )}
                                             </p>
-                                            <p className="text-muted-foreground text-xs tabular-nums">
+                                            <p className="tabular-nums text-muted-foreground text-xs">
                                                 {pnlPercent >= 0 ? "+" : ""}
                                                 {pnlPercent.toFixed(2)}%
                                             </p>
                                         </div>
-                                        <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
+                                        <div className="flex flex-wrap gap-3 text-muted-foreground text-xs">
                                             <span>
                                                 Valeur:{" "}
                                                 {formatCurrency(
@@ -157,9 +169,9 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-end">
+                                    <div className="flex justify-end items-center">
                                         <svg
-                                            className="h-16 w-full max-w-[180px]"
+                                            className="w-full max-w-[180px] h-16"
                                             viewBox="0 0 120 48"
                                             fill="none"
                                         >
@@ -212,7 +224,7 @@ function StocksPnl({ user, limit }: StocksPnlProps) {
                     })}
                 </div>
             ) : (
-                <div className="bg-card/70 text-muted-foreground rounded-2xl border p-10 text-center">
+                <div className="bg-card/70 border rounded-2xl p-10 text-muted-foreground text-center">
                     Aucune plus-value enregistree pour le moment.
                 </div>
             )}

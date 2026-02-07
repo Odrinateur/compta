@@ -254,12 +254,12 @@ function PriceChart({
         new Date(timestamp).toLocaleDateString("fr-FR");
 
     if (isLoading) {
-        return <Skeleton className="h-60 w-full" />;
+        return <Skeleton className="w-full h-60" />;
     }
 
     if (series.length === 0) {
         return (
-            <div className="text-muted-foreground py-16 text-center">
+            <div className="py-16 text-muted-foreground text-center">
                 Ajoutez un ETF et vos achats pour voir &apos;l&apos;évolution.
             </div>
         );
@@ -267,17 +267,17 @@ function PriceChart({
 
     return (
         <div className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex justify-between items-start gap-4">
                 <div>
                     <p className="text-muted-foreground text-xs">
                         {filterLabel} {rangeLabel ? `- ${rangeLabel}` : ""}
                     </p>
-                    <p className="text-lg font-semibold tabular-nums">
+                    <p className="font-semibold tabular-nums text-lg">
                         {formatCurrency(series[series.length - 1]!.value, 3)}
                     </p>
                 </div>
                 {hoverPoint && !comparePoint ? (
-                    <div className="min-w-0 shrink text-right">
+                    <div className="min-w-0 text-right shrink">
                         <p className="text-xs sm:text-sm">
                             {formatDate(hoverPoint.timestamp)}
                         </p>
@@ -287,7 +287,7 @@ function PriceChart({
 
             <div
                 ref={chartRef}
-                className="relative h-60 w-full touch-none"
+                className="relative touch-none w-full h-60"
                 onMouseMove={handleMouseMove}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
@@ -297,7 +297,7 @@ function PriceChart({
                 onTouchEnd={handleTouchEnd}
             >
                 {hoverPoint && comparePoint && comparison ? (
-                    <div className="bg-background/95 absolute top-2 right-0 left-0 z-20 mx-auto flex max-w-fit flex-col gap-1 rounded-md border px-2 py-1.5 text-xs shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:text-sm">
+                    <div className="bg-background/95 shadow-sm backdrop-blur-sm border rounded-md top-2 right-0 left-0 z-20 absolute flex sm:flex-row flex-col sm:justify-between sm:items-center gap-1 mx-auto px-2 py-1.5 max-w-fit text-xs sm:text-sm">
                         <div className="flex items-center gap-2">
                             <span className="text-muted-foreground">
                                 Comparaison:
@@ -334,7 +334,7 @@ function PriceChart({
                         </div>
                     </div>
                 ) : null}
-                <svg className="absolute inset-0 h-full w-full">
+                <svg className="absolute inset-0 w-full h-full">
                     <defs>
                         <linearGradient
                             id="portfolioGradient"
@@ -422,10 +422,10 @@ function PriceChart({
 
                 {hoverPoint ? (
                     <div
-                        className="bg-background/90 text-foreground pointer-events-none absolute z-10 rounded-md border px-2 py-1 text-xs font-medium shadow-sm"
+                        className="bg-background/90 shadow-sm border rounded-md z-10 absolute px-2 py-1 pointer-events-none font-medium text-foreground text-xs"
                         style={{
                             left: hoverPoint.x,
-                            top: Math.max(4, hoverPoint.y - 24),
+                            bottom: -10,
                             transform: "translateX(-50%)",
                         }}
                     >
@@ -435,10 +435,10 @@ function PriceChart({
 
                 {comparePoint ? (
                     <div
-                        className="bg-background/90 text-foreground pointer-events-none absolute z-10 rounded-md border px-2 py-1 text-xs font-medium shadow-sm"
+                        className="bg-background/90 shadow-sm border rounded-md z-10 absolute px-2 py-1 pointer-events-none font-medium text-foreground text-xs"
                         style={{
                             left: comparePoint.x,
-                            top: Math.max(4, comparePoint.y - 24),
+                            bottom: -10,
                             transform: "translateX(-50%)",
                         }}
                     >
@@ -447,14 +447,14 @@ function PriceChart({
                 ) : null}
 
                 {activeMarker ? (
-                    <div className="bg-background/90 absolute -top-14 right-0 rounded-md border px-3 py-2 shadow-sm">
+                    <div className="bg-background/90 shadow-sm border rounded-md -top-14 right-0 absolute px-3 py-2">
                         <p className="text-muted-foreground text-xs">
                             {activeMarker.side === "sell" ? "Vente" : "Achat"}{" "}
                             {new Date(
                                 activeMarker.timestamp
                             ).toLocaleDateString("fr-FR")}
                         </p>
-                        <p className="text-center text-sm font-semibold tabular-nums">
+                        <p className="font-semibold tabular-nums text-sm text-center">
                             {activeMarker.quantity} x{" "}
                             {formatCurrency(activeMarker.price, 3)}
                         </p>

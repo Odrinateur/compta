@@ -284,8 +284,8 @@ function StocksDashboard({
         : "Tous les ETFs";
 
     return (
-        <div className="flex w-full flex-col gap-6">
-            <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-6 w-full">
+            <div className="flex justify-between items-center">
                 <H3>Stocks</H3>
                 <div className="flex items-center gap-2">
                     <Link href="/stocks/transactions">
@@ -301,7 +301,7 @@ function StocksDashboard({
                 </div>
             </div>
 
-            <section className="flex flex-wrap items-center justify-between gap-3">
+            <section className="flex flex-wrap justify-between items-center gap-3">
                 <div className="flex flex-wrap gap-2">
                     <Select
                         value={selectedEtfId ? String(selectedEtfId) : "all"}
@@ -346,12 +346,12 @@ function StocksDashboard({
                     </Select>
                 </div>
 
-                <div className="flex w-full justify-center gap-6 text-right md:w-auto md:justify-end">
+                <div className="flex flex-wrap justify-center md:justify-end gap-6 w-full md:w-auto text-right">
                     <div>
                         <p className="text-muted-foreground text-xs">
                             {isEtfView ? "Cours" : "Valeur"}
                         </p>
-                        <p className="text-lg font-semibold tabular-nums">
+                        <p className="font-semibold tabular-nums text-lg">
                             {formatCurrency(portfolioValue, 3)}
                         </p>
                     </div>
@@ -359,7 +359,7 @@ function StocksDashboard({
                         <p className="text-muted-foreground text-xs">
                             {isEtfView ? "Prix moyen" : "Investi"}
                         </p>
-                        <p className="text-lg font-semibold tabular-nums">
+                        <p className="font-semibold tabular-nums text-lg">
                             {formatCurrency(
                                 isEtfView && costBasis.quantity > 0
                                     ? costBasis.invested / costBasis.quantity
@@ -373,7 +373,7 @@ function StocksDashboard({
                             <p className="text-muted-foreground text-xs">
                                 Position
                             </p>
-                            <p className="text-lg font-semibold tabular-nums">
+                            <p className="font-semibold tabular-nums text-lg">
                                 {costBasis.quantity} /{" "}
                                 {costBasis.quantity > 0
                                     ? formatCurrency(costBasis.invested, 3)
@@ -391,7 +391,7 @@ function StocksDashboard({
                                 side="top"
                                 content={
                                     <div className="flex flex-col gap-1">
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex justify-between items-center gap-3">
                                             <span>Realisee</span>
                                             <span className="tabular-nums">
                                                 {realizedGainValue !== null &&
@@ -404,7 +404,7 @@ function StocksDashboard({
                                                 )}
                                             </span>
                                         </div>
-                                        <div className="flex items-center justify-between gap-3">
+                                        <div className="flex justify-between items-center gap-3">
                                             <span>Latente</span>
                                             <span className="tabular-nums">
                                                 {unrealizedGainValue !== null &&
@@ -420,18 +420,18 @@ function StocksDashboard({
                                     </div>
                                 }
                             >
-                                <p className="text-lg font-semibold tabular-nums">
+                                <p className="font-semibold tabular-nums text-lg">
                                     {gainValue >= 0 ? "+" : ""}
                                     {formatCurrency(gainValue, 3)}
                                 </p>
                             </ResponsiveTooltip>
                         ) : (
-                            <p className="text-lg font-semibold tabular-nums">
+                            <p className="font-semibold tabular-nums text-lg">
                                 {gainValue >= 0 ? "+" : ""}
                                 {formatCurrency(gainValue, 3)}
                             </p>
                         )}
-                        <p className="text-muted-foreground text-xs tabular-nums">
+                        <p className="tabular-nums text-muted-foreground text-xs">
                             {gainPercent >= 0 ? "+" : ""}
                             {gainPercent.toFixed(2)}%
                         </p>
@@ -439,7 +439,7 @@ function StocksDashboard({
                 </div>
             </section>
 
-            <section className="bg-background rounded-xl border p-4">
+            <section className="bg-background border rounded-xl p-4">
                 <PriceChart
                     series={series}
                     transactions={transactionPoints}
