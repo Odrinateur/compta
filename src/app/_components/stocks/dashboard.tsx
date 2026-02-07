@@ -333,14 +333,18 @@ function StocksDashboard({
         if (!pnlSummary || pnlSummary.length === 0) return null;
         let invested = 0;
         let totalPnl = 0;
+        let totalValue = 0;
         for (const item of pnlSummary) {
-            invested += item.invested;
+            // Si les plus-values sont réinvesties, l'investi inclut les plus-values réalisées réinvesties
+            invested += item.invested + item.realizedPnl;
             totalPnl += item.totalPnl;
+            // Si les plus-values sont réinvesties, la valeur totale est la somme des valeurs actuelles
+            totalValue += item.quantity * item.currentPrice;
         }
         return {
             invested,
             totalPnl,
-            value: invested + totalPnl,
+            value: totalValue,
         };
     }, [pnlSummary]);
 
