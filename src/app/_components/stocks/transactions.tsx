@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/trpc/react";
 import { type MeUser } from "@/server/db/types";
 import { Button } from "@/app/_components/ui/button";
@@ -20,7 +20,7 @@ import {
     matchEtfName,
     parseStockTransactionText,
 } from "@/lib/stocks/parse-transaction-text";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, Trash2Icon } from "lucide-react";
 
 interface StocksTransactionsProps {
     user: MeUser;
@@ -71,6 +71,67 @@ function StocksTransactions({ user }: StocksTransactionsProps) {
     const [newEtfId, setNewEtfId] = useState<number | undefined>(undefined);
     const [pasteError, setPasteError] = useState<string | null>(null);
     const [isPasting, setIsPasting] = useState(false);
+
+    const groupedTransactions = useMemo(() => {
+        if (!transactions) return [];
+        const byEtf = new Map<
+            number | string,
+            {
+                etf: (typeof transactions)[number]["etf"] | null | undefined;
+                items: typeof transactions;
+                totals: {
+                    quantity: number;
+                    amount: number;
+                    fees: number;
+                };
+            }
+        >();
+
+        transactions.forEach((transaction) => {
+            const key = transaction.etf?.id ?? "unknown";
+            const signedQuantity =
+                transaction.side === "sell"
+                    ? -transaction.quantity
+                    : transaction.quantity;
+            const signedAmount =
+                transaction.side === "sell"
+                    ? -transaction.quantity * transaction.price
+                    : transaction.quantity * transaction.price;
+            const fees = transaction.operationFee ?? 0;
+            const existing = byEtf.get(key);
+            if (existing) {
+                existing.items.push(transaction);
+                existing.totals.quantity += signedQuantity;
+                existing.totals.amount += signedAmount;
+                existing.totals.fees += fees;
+            } else {
+                byEtf.set(key, {
+                    etf: transaction.etf,
+                    items: [transaction],
+                    totals: {
+                        quantity: signedQuantity,
+                        amount: signedAmount,
+                        fees,
+                    },
+                });
+            }
+        });
+
+        return Array.from(byEtf.values())
+            .map((group) => ({
+                ...group,
+                items: [...group.items].sort(
+                    (left, right) =>
+                        new Date(right.date).getTime() -
+                        new Date(left.date).getTime()
+                ),
+            }))
+            .sort((left, right) => {
+                const leftName = left.etf?.name ?? "ETF";
+                const rightName = right.etf?.name ?? "ETF";
+                return leftName.localeCompare(rightName, "fr");
+            });
+    }, [transactions]);
 
     useEffect(() => {
         if (!newEtfId && etfs && etfs.length > 0) {
@@ -142,8 +203,8 @@ function StocksTransactions({ user }: StocksTransactionsProps) {
     };
 
     return (
-        <div className="flex w-full flex-col gap-6">
-            <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-6 w-full">
+            <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <Link href="/stocks">
                         <Button size="icon">
@@ -158,8 +219,8 @@ function StocksTransactions({ user }: StocksTransactionsProps) {
                 </p>
             </div>
 
-            <section className="bg-card/80 rounded-2xl border p-4 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+            <section className="bg-card/80 shadow-sm border rounded-2xl p-4">
+                <div className="flex flex-wrap justify-between items-center gap-3">
                     <p className="text-muted-foreground text-xs">
                         Collez votre avis d'ordre pour pre-remplir le
                         formulaire.
@@ -174,9 +235,9 @@ function StocksTransactions({ user }: StocksTransactionsProps) {
                     </Button>
                 </div>
                 {pasteError ? (
-                    <p className="mt-2 text-xs text-rose-600">{pasteError}</p>
+                    <p className="mt-2 text-rose-600 text-xs">{pasteError}</p>
                 ) : null}
-                <div className="mt-4 grid gap-4 md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr_auto]">
+                <div className="gap-4 grid md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr_auto] mt-4">
                     <div className="flex flex-col">
                         <label className="text-muted-foreground text-xs">
                             ETF
@@ -300,86 +361,163 @@ function StocksTransactions({ user }: StocksTransactionsProps) {
             </section>
 
             {isLoadingTransactions ? (
-                <Skeleton className="h-40 w-full" />
-            ) : transactions && transactions.length > 0 ? (
-                <div className="grid gap-3">
-                    {transactions.map((transaction) => (
-                        <div
-                            key={transaction.id}
-                            className="bg-card/90 flex flex-wrap items-center justify-between gap-4 rounded-2xl border p-4 shadow-sm"
+                <Skeleton className="w-full h-40" />
+            ) : groupedTransactions.length > 0 ? (
+                <div className="gap-4 grid">
+                    {groupedTransactions.map((group) => (
+                        <section
+                            key={group.etf?.id ?? "unknown"}
+                            className="bg-card/90 shadow-sm border rounded-2xl p-4"
                         >
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${
-                                        transaction.side === "sell"
-                                            ? "bg-rose-500/15 text-rose-600"
-                                            : "bg-emerald-500/15 text-emerald-600"
-                                    }`}
-                                >
-                                    {transaction.side === "sell" ? "V" : "A"}
-                                </div>
+                            <div className="flex flex-wrap justify-between items-center gap-2">
                                 <div>
-                                    <p className="text-sm font-semibold">
-                                        {transaction.etf?.name ?? "ETF"}
+                                    <p className="font-semibold text-sm">
+                                        {group.etf?.name ?? "ETF"}
                                     </p>
                                     <p className="text-muted-foreground text-xs">
-                                        {transaction.etf?.yahooSymbol ?? ""} ·{" "}
-                                        {formatDate(transaction.date)}
+                                        {group.etf?.yahooSymbol ?? ""} ·{" "}
+                                        {group.items.length} operation
+                                        {group.items.length > 1 ? "s" : ""}
                                     </p>
                                 </div>
                             </div>
-
-                            <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
-                                <div className="text-right">
-                                    <p className="text-xs">Quantite</p>
-                                    <p className="text-foreground font-semibold tabular-nums">
-                                        {transaction.quantity}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs">Prix</p>
-                                    <p className="text-foreground font-semibold tabular-nums">
-                                        {formatCurrency(transaction.price, 3)}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs">Total</p>
-                                    <p className="text-foreground font-semibold tabular-nums">
-                                        {formatCurrency(
-                                            transaction.quantity *
-                                                transaction.price,
-                                            3
-                                        )}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs">Frais</p>
-                                    <p className="text-foreground font-semibold tabular-nums">
-                                        {formatCurrency(
-                                            transaction.operationFee ?? 0,
-                                            2
-                                        )}
-                                    </p>
-                                </div>
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="border-separate border-spacing-y-2 w-full min-w-[720px] text-sm">
+                                    <thead className="text-muted-foreground text-xs">
+                                        <tr>
+                                            <th className="px-3 text-left">
+                                                Date
+                                            </th>
+                                            <th className="px-3 text-left">
+                                                Type
+                                            </th>
+                                            <th className="px-3 text-right">
+                                                Quantite
+                                            </th>
+                                            <th className="px-3 text-right">
+                                                Prix
+                                            </th>
+                                            <th className="px-3 text-right">
+                                                Total
+                                            </th>
+                                            <th className="px-3 text-right">
+                                                Frais
+                                            </th>
+                                            <th className="px-3 text-right">
+                                                Action
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {group.items.map((transaction) => (
+                                            <tr
+                                                key={transaction.id}
+                                                className="bg-background/80"
+                                            >
+                                                <td className="rounded-l-xl px-3 py-3">
+                                                    <p className="font-medium">
+                                                        {formatDate(
+                                                            transaction.date
+                                                        )}
+                                                    </p>
+                                                </td>
+                                                <td className="px-3 py-3">
+                                                    <span
+                                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                                            transaction.side ===
+                                                            "sell"
+                                                                ? "bg-rose-500/15 text-rose-600"
+                                                                : "bg-emerald-500/15 text-emerald-600"
+                                                        }`}
+                                                    >
+                                                        {transaction.side ===
+                                                        "sell"
+                                                            ? "Vente"
+                                                            : "Achat"}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-3 font-semibold tabular-nums text-right">
+                                                    {transaction.quantity}
+                                                </td>
+                                                <td className="px-3 py-3 font-semibold tabular-nums text-right">
+                                                    {formatCurrency(
+                                                        transaction.price,
+                                                        3
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-3 font-semibold tabular-nums text-right">
+                                                    {formatCurrency(
+                                                        transaction.quantity *
+                                                            transaction.price,
+                                                        3
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-3 font-semibold tabular-nums text-right">
+                                                    {formatCurrency(
+                                                        transaction.operationFee ??
+                                                            0,
+                                                        2
+                                                    )}
+                                                </td>
+                                                <td className="rounded-r-xl px-3 py-3 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-rose-600 hover:text-rose-700"
+                                                            onClick={() =>
+                                                                deleteTransactionMutation.mutate(
+                                                                    {
+                                                                        token: user.token,
+                                                                        id: transaction.id,
+                                                                    }
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2Icon className="mr-1 w-4 h-4" />
+                                                            Supprimer
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        <tr className="bg-muted/40">
+                                            <td className="rounded-l-xl px-3 py-3 font-semibold text-muted-foreground text-xs">
+                                                Total net
+                                            </td>
+                                            <td className="px-3 py-3 text-muted-foreground text-xs text-right">
+                                                -
+                                            </td>
+                                            <td className="px-3 py-3 font-semibold tabular-nums text-right">
+                                                {group.totals.quantity}
+                                            </td>
+                                            <td className="px-3 py-3 text-muted-foreground text-xs text-right">
+                                                -
+                                            </td>
+                                            <td className="px-3 py-3 font-semibold tabular-nums text-right">
+                                                {formatCurrency(
+                                                    group.totals.amount,
+                                                    3
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-3 font-semibold tabular-nums text-right">
+                                                {formatCurrency(
+                                                    group.totals.fees,
+                                                    2
+                                                )}
+                                            </td>
+                                            <td className="rounded-r-xl px-3 py-3 text-muted-foreground text-xs text-right">
+                                                -
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                    deleteTransactionMutation.mutate({
-                                        token: user.token,
-                                        id: transaction.id,
-                                    })
-                                }
-                            >
-                                Supprimer
-                            </Button>
-                        </div>
+                        </section>
                     ))}
                 </div>
             ) : (
-                <div className="bg-card/70 text-muted-foreground rounded-2xl border p-10 text-center">
+                <div className="bg-card/70 border rounded-2xl p-10 text-muted-foreground text-center">
                     Aucune transaction pour le moment.
                 </div>
             )}
