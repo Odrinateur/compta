@@ -47,9 +47,6 @@ export default async function RootLayout({
             <body className="relative h-full">
                 <DynamicManifest />
                 <TRPCReactProvider>
-                    <header className="border-b flex justify-center items-center">
-                        <H2>compt</H2>
-                    </header>
                     <HydrateClient>{children}</HydrateClient>
                 </TRPCReactProvider>
             </body>

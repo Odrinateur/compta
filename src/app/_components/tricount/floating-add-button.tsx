@@ -20,12 +20,9 @@ export function FloatingAddButton({ href }: FloatingAddButtonProps) {
     if (!mounted) return null;
 
     return createPortal(
-        <Link
-            href={href}
-            className="fixed right-4 bottom-4 z-50 sm:hidden"
-        >
-            <Button size="icon" className="size-12 rounded-full shadow-lg">
-                <PlusIcon className="size-6" />
+        <Link href={href} className="sm:hidden right-6 bottom-6 z-50 fixed">
+            <Button size="icon" className="shadow-lg rounded-full size-18">
+                <PlusIcon className="size-12" />
             </Button>
         </Link>,
         document.body

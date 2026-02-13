@@ -5,7 +5,7 @@ import { api } from "@/trpc/react";
 import { useState } from "react";
 import { CustomDialog } from "../../custom-dialog";
 import { Button } from "../../ui/button";
-import { Loader2, PlusIcon } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import { Label } from "../../ui/label";
 import {
     Select,
@@ -73,7 +73,7 @@ export default function AddUserButton({ user, idTri }: AddUserButtonProps) {
             title="Ajouter un utilisateur"
             trigger={
                 <Button variant="outline" size="icon" className="size-8">
-                    <PlusIcon className="size-4" />
+                    <UserPlus className="size-4" />
                 </Button>
             }
             variant="custom"
