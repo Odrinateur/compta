@@ -7,7 +7,6 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient } from "@/trpc/server";
 import { H2 } from "./_components/ui/typography";
 import { DynamicManifest } from "./_components/dynamic-manifest";
-import { PullToRefresh } from "./_components/pull-to-refresh";
 
 export const viewport: Viewport = {
     themeColor: "#000000",
@@ -44,16 +43,14 @@ export default async function RootLayout({
     children,
 }: Readonly<{ children: React.ReactNode }>) {
     return (
-        <html lang="en" className={`${geist.variable} h-full overflow-hidden`}>
-            <body className="relative h-full overflow-x-hidden overflow-y-auto">
+        <html lang="en" className={`${geist.variable} h-full`}>
+            <body className="relative h-full">
                 <DynamicManifest />
                 <TRPCReactProvider>
-                    <PullToRefresh>
-                        <header className="border-b flex justify-center items-center">
-                            <H2>compt</H2>
-                        </header>
-                        <HydrateClient>{children}</HydrateClient>
-                    </PullToRefresh>
+                    <header className="border-b flex justify-center items-center">
+                        <H2>compt</H2>
+                    </header>
+                    <HydrateClient>{children}</HydrateClient>
                 </TRPCReactProvider>
             </body>
         </html>
